@@ -45,7 +45,9 @@
 \renewcommand{\floatpagefraction}{0.35}
 
 % math stuff
-\newtheorem{theorem}{Theorem}
+
+\newtheorem{definition}{Definition}[section]
+\newtheorem{theorem}{Theorem}[section]
 \newtheorem{claim}[theorem]{Claim}
 \newtheorem{proposition}[theorem]{Proposition}
 \newtheorem{lemma}[theorem]{Lemma}
@@ -66,10 +68,59 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
+
+
 \maketitle
 
 \section{Theory}
-Content coming soon
+\subsection{Lie groups}
+In this subsection some basic Lie grup properties are introduced. Based on \cite{celledoni2016}. Basic knowlegde of smooth manifolds is assumed. 
+\begin{definition}[Lie group]
+  A Lie group $G$ is a smooth manifold that is also a group, such that multiplication
+  \begin{equation}
+    \mu : G \times G \rightarrow G  
+  \end{equation}
+  and inversion
+  \begin{equation}
+    i : G  \rightarrow G  
+  \end{equation}
+  are smooth. 
+\end{definition}
+Since both  multiplication and inversion are smooth we define multiplication by $g \in G$ as diffeomorphism.
+\begin{definition}
+  Let $G$ be a Lie group and $g \in G$. Then the \textbf{right translation} by $g$ is defined as
+  \begin{equation}
+    r_g(h):= gh \quad  \forall \ h  \in G.
+  \end{equation}
+\end{definition}
+Once translation is defined, the following property of vector fields follows. 
+\begin{definition}
+  A vector field $X$ on a Lie group $G$ is \textbf{right invariant} if it is invariant under the pushforward of all right translation. That is is
+  \begin{equation}
+    (r_g)_*X = X  \quad \forall g \in G 
+  \end{equation}
+\end{definition}
+An invariant vector field $X$ on a Lie group $G$ is thus uniquely defined by the vector field's value at the identity element $e$. Similarly, for all vectors $\xi \in T_eG$ we can define an invariant vector field  $X^{\xi}$ on $G$. 
+\begin{definition}[Lie algebra]
+  Let $e$ be the identity element of the Lie group $G$. Then the \textbf{Lie algebra} $\mathfrak{g}$ is the vector space $T_eG$ together with a lie bracket as bilinear product.  
+\end{definition}
+% TODO: write about bracket 
+
+\subsection{The exponential mpa}
+
+\begin{definition}[Exponential map]
+Let $\mathfrak{g}$ be the Lie algebra of the Lie group $G$ with identity $e$. For all $\xi \in \mathfrak{g}$ let $\gamma^{\xi}$ be the integral curve of the right invariant vector field $X^{\xi}$ where $X^\xi (e)=\xi$ and $\gamma^\xi(0) = e$. The \textbf{exponential map} is the map $\exp : \mathfrak{g} \rightarrow G$ such that $\exp(\xi) = \gamma^\xi(1)$. 
+\end{definition}
+% TODO: make an argumet for why it is well defined
+\begin{proposition}
+  Let $X$ be a right invariant vector field on the Lie group $G$ with identity $e$. Then the flow of $X$, $\phi_t$ is given by $\phi_t(g) = \exp(tX(e))g$.
+\end{proposition}
+\begin{proof}
+  \item one parameter subgoup. 
+  \item diffeomorphism pullback invarinat, flow. 
+\end{proof}
+% TODO: show that the flow is defined for all times t 
+
 \cite{lystad2019}
 % \begin{figure}[t]
 %     \centering
