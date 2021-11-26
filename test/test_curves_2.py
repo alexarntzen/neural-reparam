@@ -1,6 +1,6 @@
 import torch
-from deep_reparametrization.plotting import plot_curve, plot_curve_1d
 from math import pi
+from deep_reparametrization.plotting import plot_curve, plot_curve_1d
 
 
 def c_2(t):
@@ -40,7 +40,7 @@ def r(t):
     return torch.sqrt(d_ksi_dt(t)) * q(ksi_example(t))
 
 
-# run this to whow the curves
+# run this to show the curves
 if __name__ == "__main__":
     # Data frame with dat
     plot_curve(c_1)
