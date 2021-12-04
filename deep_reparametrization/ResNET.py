@@ -42,11 +42,10 @@ class ResNET(nn.Module):
         self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
     def forward(self, x):
-        input = x
         # The forward function performs the set of affine and
         # non-linear transformations defining the network
         # (see equation above)
         x = self.activation_(self.input_layer(x))
         for layer in self.hidden_layers:
-            x = self.activation_(layer(x))
-        return self.output_layer(x) + input
+            x = self.activation_(layer(x)) + x
+        return self.output_layer(x)

@@ -74,7 +74,7 @@
 
 \section{Theory}
 \subsection{Lie groups}
-In this subsection some basic Lie grup properties are introduced. Based on \cite{celledoni2016}. Basic knowlegde of smooth manifolds is assumed. 
+In this subsection some basic Lie group properties are introduced. Based on \cite{celledoni2016}. Basic knowledge of smooth manifolds is assumed. 
 \begin{definition}[Lie group]
   A Lie group $G$ is a smooth manifold that is also a group, such that multiplication
   \begin{equation}
@@ -90,9 +90,12 @@ Since both  multiplication and inversion are smooth we define multiplication by 
 \begin{definition}
   Let $G$ be a Lie group and $g \in G$. Then the \textbf{right translation} by $g$ is defined as
   \begin{equation}
-    r_g(h):= gh \quad  \forall \ h  \in G.
+    R_g(h):= hg \quad  \forall \ h  \in G.
   \end{equation}
 \end{definition}
+\begin{remark}
+  in this text we use the \textbf{right} translation, but we could similarly define the left translation. 
+\end{remark}
 Once translation is defined, the following property of vector fields follows. 
 \begin{definition}
   A vector field $X$ on a Lie group $G$ is \textbf{right invariant} if it is invariant under the pushforward of all right translation. That is is
@@ -104,23 +107,35 @@ An invariant vector field $X$ on a Lie group $G$ is thus uniquely defined by the
 \begin{definition}[Lie algebra]
   Let $e$ be the identity element of the Lie group $G$. Then the \textbf{Lie algebra} $\mathfrak{g}$ is the vector space $T_eG$ together with a lie bracket as bilinear product.  
 \end{definition}
+
 % TODO: write about bracket 
 
-\subsection{The exponential mpa}
+\subsection{The exponential map}
 
 \begin{definition}[Exponential map]
 Let $\mathfrak{g}$ be the Lie algebra of the Lie group $G$ with identity $e$. For all $\xi \in \mathfrak{g}$ let $\gamma^{\xi}$ be the integral curve of the right invariant vector field $X^{\xi}$ where $X^\xi (e)=\xi$ and $\gamma^\xi(0) = e$. The \textbf{exponential map} is the map $\exp : \mathfrak{g} \rightarrow G$ such that $\exp(\xi) = \gamma^\xi(1)$. 
 \end{definition}
 % TODO: make an argumet for why it is well defined
 \begin{proposition}
-  Let $X$ be a right invariant vector field on the Lie group $G$ with identity $e$. Then the flow of $X$, $\phi_t$ is given by $\phi_t(g) = \exp(tX(e))g$.
+  Let $X$ be a right invariant vector field on the Lie group $G$ with identity $e$. Then the flow of $X$, $\phi_t$ is given by $\phi_t(g) = \exp(tX(e))g$ for all $g$ in $G$.
 \end{proposition}
 \begin{proof}
-  \item one parameter subgoup. 
-  \item diffeomorphism pullback invarinat, flow. 
+  Denote $\gamma^{\xi}$ as the integral curve of an  invariant vector field $X^{\xi}$such that $\dot{\gamma}^{\xi}(0) = \xi$ and $\gamma^\xi(0)=e$. Then $\gamma^{t\xi}(0) =  \gamma^{\xi}(0)=e$ and 
+  \begin{equation}
+    \frac{d}{ds}\gamma^{\xi}(ts) = t\dot\gamma^{\xi}(st)=tX^\xi(\gamma^{\xi}(ts)) = t D R_{\gamma^\xi(ts)} \vert_{e} \xi = X^{t\xi}(\gamma^{\xi}(ts)).
+  \end{equation}
+  So $\gamma^\xi(ts)$ is the integral curve of $X^{t\xi}$ and $\gamma^\xi(ts)=\gamma^{t\xi}(s)$. Therefore,  $\exp(t\xi) = \gamma^{\xi}(t)$.
+  
+  Now, we can show that $\exp(tX(e))g$ is the integral curve of $X^{\xi}$ starting at $g$. Firstly, $\exp(0)g = \gamma^{t\xi}(0)g=g$. Then, computing the derivative we have 
+  \begin{equation}
+    \frac{d}{dt} \exp(t\xi)g = D R_g \vert_{\gamma^\xi(t)} X^\xi(\gamma^\xi(t)) = X^\xi(\exp(t\xi)g).
+  \end{equation}
+  By uniqueness of integral curves the result follows. 
 \end{proof}
 % TODO: show that the flow is defined for all times t 
-
+\begin{remark}
+  If $G$ is a subgroup of $GL(n)$ then it can be shown that the $\exp(A)$ is the matrix exponential $e^{A}$.
+\end{remark}
 \cite{lystad2019}
 % \begin{figure}[t]
 %     \centering
@@ -128,6 +143,14 @@ Let $\mathfrak{g}$ be the Lie algebra of the Lie group $G$ with identity $e$. Fo
 %     \caption{Optimal curve of $(D^*,v^*)$ values. The initial Sobol points are also shown with the corresponding $G$ value}
 %     \label{fig:task5}
 % \end{figure}
+
+The exponential map also has a unique inverse. 
+\begin{definition}[Logatimic derivative]
+  $\delta^r(\gamma)$
+\end{definition}
+\begin{proposition}
+  The right logarithmic derivative is the inverse of the exponential map?  
+\end{proposition}
 
 \section*{Appendix}
 The code for this project can be found at \url{https://github.com/alexarntzen/prosjektoppgave}

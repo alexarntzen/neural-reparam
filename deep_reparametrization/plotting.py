@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 from deepthermal.plotting import plot_result_sorted
 import torch
 
@@ -23,8 +24,23 @@ def plot_curve(*curves):
 
 def plot_curve_1d(*curves):
     N = 500
-    interval = torch.linspace(0, 1, N).reshape(N, 1)
-    for q in curves:
+    interval = torch.linspace(0.1, 0.9, N).reshape(N, 1)
+    for i, q in enumerate(curves):
         Q = q(interval)
-        plt.plot(interval, Q)
+        plt.plot(interval, Q, label=i)
+        plt.plot(Q, interval, label=i)
+    plt.legend()
     plt.show()
+
+
+def plot_models_performance(
+    models,
+    data,
+    loss,
+):
+    models_loss = np.zeros(len(models))
+
+    for model in models:
+        for model_k in model:
+            models_loss += loss(model_k, data)
+        models_loss /= len(model)
