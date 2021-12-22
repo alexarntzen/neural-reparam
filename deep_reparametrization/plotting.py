@@ -12,23 +12,25 @@ def plot_reparametrization(model, x_train, model_compare, **kwargs):
     )
 
 
-def plot_curve(*curves):
+def plot_curve(*curves, name=None):
     N = 500
     interval = torch.linspace(0, 1, N).reshape(N, 1)
     for q in curves:
         Q = q(interval)
         plt.plot(Q[:, 0], Q[:, 1])
         plt.plot(Q[::10, 0], Q[::10, 1], "*")
+    if name is not None:
+        plt.savefig(name)
     plt.show()
 
 
 def plot_curve_1d(*curves):
     N = 500
-    interval = torch.linspace(0.1, 0.9, N).reshape(N, 1)
+    interval = torch.linspace(0, 1, N).reshape(N, 1)
     for i, q in enumerate(curves):
         Q = q(interval)
         plt.plot(interval, Q, label=i)
-        plt.plot(Q, interval, label=i)
+    plt.grid()
     plt.legend()
     plt.show()
 

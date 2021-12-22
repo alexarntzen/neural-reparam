@@ -1,7 +1,7 @@
 """These curves are not the same mod Diff+"""
 import torch
 from math import pi, sqrt
-from deep_reparametrization.plotting import plot_curve
+from deep_reparametrization.plotting import plot_curve, plot_curve_1d
 
 
 # parametrization
@@ -44,7 +44,8 @@ DIST_R_Q = 2 - sqrt(2)
 # run this to show the curves
 if __name__ == "__main__":
     # Data frame with dat
-    plot_curve(c_1)
-    plot_curve(c_2)
-    plot_curve(q)
-    plot_curve(r)
+    plot_curve(c_1, name="../figures/curve_2/curve_c_1.pdf")
+    plot_curve(c_2, name="../figures/curve_2/curve_c_2.pdf")
+    plot_curve(q, name="../figures/curve_2/curve_q.pdf")
+    plot_curve(r, name="../figures/curve_2/curve_r.pdf")
+    plot_curve_1d(ksi)

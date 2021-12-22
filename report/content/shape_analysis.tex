@@ -1,0 +1,38 @@
+
+\section{Shape analysis}
+\subsection{Definitions and motivation}
+To start the problem of analyzing curves we fist introduce the space of curves that are considered in this project. The curves we will consider will be the space of all immersions from the interval  \(I = [0, 1]\) to  \(\R^d\)
+\begin{equation}
+  \mathcal{P}= \text{Imm}(I, \R^d) = \{c \in C^{\infty}(I, \R^d) :  c'(t) \neq  0 \ \forall \ t \in I  \}.
+\end{equation}
+% why immersion, discontinuity? 
+One need not only consider immersions from the unit interval  \(I\). Analysis of closed curves [0]  \(\text{Imm}(S^1, \R^d)\) and surfaces  \(\text{Imm}(I \times I, \R^d)\) can also be done within the same framework. % formulate better 
+The following framework can also be extended to immersions into other spaces than  \(\R^d\). This will be the content of chapter.
+
+There are several remarks about analysis of curves in  \(\text{Imm}(I, \R^d)\) . Firstly,  \(\text{Imm}(I, \R^d)\) is not a vector space like  \(C^{\infty}(I, \R^d)\). Also, we would not expect pointwise addition of curves to produce any physically meaningful result. Therefore we study  \(\text{Imm}(I, \R^d)\) as a an embedded submanifold of  \(C^{\infty}(I, \R^d)\). Secondly we would like to study shapes independent of parametrization. More precisely, the space af all curve reparametrizations   \(\varphi\) is the group of orientation preserving diffeomorphisms on  \(I\)
+\begin{equation}
+  \text{Diff}^+(I) = \{\varphi \in C^{\infty}(I,I): \varphi(0) = 0, \varphi(1) = 1, \varphi'(t) > 0 \ \forall \ t \in I \}.
+\end{equation}
+Furthermore, for a reparametrization  \(\phi \) and a curve  \(c\) a group action can be defined by  \(c \circ \phi\). Thus we can define the space of parameterized curves  \(S\) as the quotient space under this group action,
+\begin{equation}
+  S = {\text{Imm}(I, \R^d)} \ / \ {\text{Diff}^+(I)}.
+\end{equation}
+The space  \(S\) is called the shape space, and contains elements called shapes, which are the orbits of the previously defined group action. One can also note that by the Quotient Manifold Theorem [0], the shape space is also a smooth manifold with the quotient map being a smooth submersion. What is a smooth submersion
+%  double check  
+
+\subsection{Metrics on the shape space}
+As noted in the introduction we are interested in finding the dista
+nce between shapes. Starting with pseudometric  \(d_{\mathcal{P}}\) on  \(\mathcal{P}\) we can make a distance on  \(S\) by starting with reparametrization invariant. We call pseudometric  \(d_{\mathcal{P}}\) is reparametrization invariant if for all  \(c_1, c_2 \in \mathcal{P}\)
+\begin{equation}
+  d_{\mathcal{P}}(c_1, c_2)=d_{\mathcal{P}}(c_1 \circ \varphi, c_2\circ \varphi) \quad \forall \varphi \in \text{Diff}^+.
+\end{equation}
+
+A reparametrization invariant pseudometric on  \(\mathcal{P}\) is not enough to make a metric on  \(S\). We need to require further that the distance between representatives of each shape is the same, regardless of parametrization. Therefore we define a metric on  \(S\) as
+\begin{equation}
+  d_S ([c_1],[c_2]) := \inf_{\varphi \in \text{Diff}^+}{  d_{\mathcal{P}}(c_1,c_2 \circ \varphi)},
+\end{equation}
+where  \([c_1]\) and  \([c_2]\) are the shapes of which  \(c_1\) and  \(c_2\) are representatives.  \(d_S\) will
+\subsection{SRVT and Q transform}
+
+\subsection{Shape analysis on Lie groups}\label{subsec:shape-lie}
+\cite{celledoni2016}

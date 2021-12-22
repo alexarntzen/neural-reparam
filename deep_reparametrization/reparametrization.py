@@ -21,24 +21,26 @@ def get_elastic_metric_loss(r: callable, constrain_cost, verbose=False):
 
     def elastic_metric_loss(ksi_model: callable, x_train, y_train):
         q_eval = y_train
+        dim = y_train.shape[1]
         ksi_eval = ksi_model(x_train)
         # each ksi_i is only dependent on x_i
         # need to sum the final ksi_prd because of batching
         ksi_dx = autograd.grad(ksi_eval.sum(), x_train, create_graph=True)[0]
-
         # would not need abs here but sometimes it goes negative
         r_trans = torch.sqrt(torch.abs(ksi_dx)) * r(ksi_eval)
-        loss = 2 * l2_loss(q_eval, r_trans)
+        loss = dim * l2_loss(q_eval, r_trans)
         # penalizes to enforce constraints
         boundary_penalties = ksi_model(zero) ** 2 + (ksi_model(one) - one) ** 2
         diff_penalty = torch.sum(ReLU(-ksi_dx)) * constrain_cost
+        final_loss = loss + diff_penalty + boundary_penalties * constrain_cost
+
         if verbose:
             print(
                 loss.item(),
                 diff_penalty.item(),
                 boundary_penalties.item() * constrain_cost,
             )
-        return loss + diff_penalty + boundary_penalties * constrain_cost
+        return final_loss
 
     return elastic_metric_loss
 

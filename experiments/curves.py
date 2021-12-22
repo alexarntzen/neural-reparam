@@ -1,6 +1,7 @@
 """These curves are the same mod DIff + """
 import torch
-from deep_reparametrization.plotting import plot_curve, plot_curve_1d
+from deep_reparametrization.plotting import plot_curve
+from deep_reparametrization.helpers import get_pc_curve, get_pl_curve
 from math import pi
 
 
@@ -44,6 +45,12 @@ def q(t):
 # run this to whow the curves
 if __name__ == "__main__":
     # Data frame with dat
-    plot_curve(c_2)
-    plot_curve(c_1)
-    plot_curve_1d(ksi)
+    plot_curve(c_1, name="../figures/curve_1/curve_c_1.pdf")
+    plot_curve(c_2, name="../figures/curve_1/curve_c_2.pdf")
+    plot_curve(q, name="../figures/curve_1/curve_q.pdf")
+    plot_curve(r, name="../figures/curve_1/curve_r.pdf")
+    plot_curve(get_pc_curve(q, 128), name="../figures/curve_1/curve_q_pc.pdf")
+    plot_curve(get_pc_curve(r, 128), name="../figures/curve_1/curve_r_pc.pdf")
+    plot_curve(get_pl_curve(q, 128), name="../figures/curve_1/curve_q_pl.pdf")
+    plot_curve(get_pl_curve(r, 128), name="../figures/curve_1/curve_r_pl.pdf")
+    # plot_curve_1d(ksi)

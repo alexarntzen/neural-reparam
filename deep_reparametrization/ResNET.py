@@ -37,7 +37,7 @@ class ResNET(nn.Module):
 
         self.input_layer = nn.Linear(self.input_dimension, self.neurons)
         self.hidden_layers = nn.ModuleList(
-            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers * 2)]
+            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers)]
         )
         self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
@@ -49,3 +49,19 @@ class ResNET(nn.Module):
         for layer in self.hidden_layers:
             x = self.activation_(layer(x)) + x
         return self.output_layer(x)
+
+    def __str__(self):
+        return "ResNET"
+
+
+def init_zero(model, **kwargs):
+    def init_weights(m):
+        if type(m) == nn.Linear and m.weight.requires_grad and m.bias.requires_grad:
+            if min(m.weight.shape) == 1:
+                nn.init.eye_(m.weight)
+            else:
+                nn.init.zeros_(m.weight)
+            m.bias.data.fill_(0)
+
+    model.apply(init_weights)
+    return model

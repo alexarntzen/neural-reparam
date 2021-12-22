@@ -1,4 +1,5 @@
 .idea
+.vscode
 .DS_store
 *__pycache__/
 *.pyc
@@ -22,7 +23,7 @@ report/main.pdf
 
 # To not include generated figures in project
 figures/*
-test/figures
+experiments/figures
 
 ## Intermediate documents:
 *.dvi

@@ -1,4 +1,3 @@
-\documentclass[a4paper]{article}
 
 \usepackage[utf8]{inputenc} %- Løser problem med å skrive andre enn engelske bokstaver f.eks æ,ø,å.
 \usepackage[T1]{fontenc} %- Støtter koding av forskjellige fonter.
@@ -6,16 +5,17 @@
 \usepackage{csquotes}
 \usepackage{url} % Gjør internett- og e-mail adresser klikkbare i tex-dokumentet.
 \usepackage{hyperref} % Gjør referansene i tex-dokumentet klikkbare, slik at du kommer til referansen i referanselista.
-\usepackage[english]{babel} % Ordbok. Hvis man setter norsk i options til usepackage babel kan man bruke norske ord.
+\usepackage[norsk,english]{babel} % Ordbok. Hvis man setter norsk i options til usepackage babel kan man bruke norske ord.
 \usepackage{amsmath} 				% Ekstra matematikkfunksjoner.
 \usepackage{amssymb}
 \usepackage{amsfonts}
 \usepackage{amsthm}
 \usepackage{mathrsfs}
-\usepackage{mathtools}
+\usepackage{mathtools}  
 \usepackage{geometry}
 \usepackage{tikz-cd}
 \usepackage{graphicx}
+\usepackage{svg}
 \usepackage{changepage}
 \usepackage{subcaption}
 \usepackage{placeins}
@@ -27,8 +27,10 @@
    \sisetup{separate-uncertainty = true}   	% Pluss-minus-form på usikkerhet (i steden for parentes). 
 \usepackage{booktabs} % For å få tilgang til finere linjer (til bruk i tabeller og slikt).
 \usepackage[font=small,labelfont=bf]{caption}		% For justering av figurtekst og tabelltekst.
-\usepackage[backend=biber]{biblatex}
-\addbibresource{./ref.bib}
+\usepackage[
+backend=biber,
+]{biblatex}
+\addbibresource{ref.bib}
 
 % math stuff
 \newcommand{\restr}[2]{\ensuremath{\left.#1\right|_{#2}}}
@@ -56,50 +58,3 @@
 \newtheorem*{observation}{Observation}
 \newtheorem*{example}{Example}
 \newtheorem*{remark}{Remark}
-
-\graphicspath{{../}}
-
-\title{Specialization Project}
-
-\author{Alexander Johan Arntzen }
-
-\date{\today}
-
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-\begin{document}
-
-
-
-\maketitle
-
-\section{Theory}
-\subsection{Lie groups}
-In this subsection some basic Lie grup properties are introduced. Based on \cite{celledoni2016}. Basic knowlegde of differentiable manifolds is assumed. 
-\begin{definition}[Lie group]
-  A Lie group $G$ is a differentiable manifold that is also a group, such that multiplcation
-  \begin{equation}
-    \mu : G \times G \rightarrow G  
-  \end{equation}
-
-  
-  and group inversion are smooth k
-\end{definition}
-% \begin{definition} 
-%   Let  
-% \end{definition}
-
-\cite{lystad2019}
-% \begin{figure}[t]
-%     \centering
-%     \includegraphics[width=0.8\textwidth]{figures/task5/final_optim_points.pdf}
-%     \caption{Optimal curve of $(D^*,v^*)$ values. The initial Sobol points are also shown with the corresponding $G$ value}
-%     \label{fig:task5}
-% \end{figure}
-
-\section*{Appendix}
-The code for this project can be found at \url{https://github.com/alexarntzen/prosjektoppgave}
-
-
-\printbibliography
-\end{document}
-
