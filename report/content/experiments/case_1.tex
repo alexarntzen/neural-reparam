@@ -1,3 +1,4 @@
+In this experiment we consider two curves that are
 \begin{figure}[t]\label{fig:curve_1}
     \begin{subfigure}[b]{0.5\textwidth}\label{fig:curve_1_c_1}
         \centering
@@ -25,12 +26,12 @@
 \begin{figure}[t]\label{fig:curve_1_example}
     \begin{subfigure}[t]{0.5\textwidth}\label{fig:curve_1_solution}
         \centering
-        \includegraphics[width=\linewidth]{figures/curve_1/curve_1_exp_4/curve_1_exp_4_5_0.pdf}
+        \includegraphics[width=\linewidth]{figures/curve_1/eks_5/plot_2_0.pdf}
         \caption{The approximate optimal reparametrization and the analytical solution.}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}\label{fig:curve_1_history}
         \centering
-        \includegraphics[width=\linewidth]{figures/curve_1/curve_1_exp_4/history_curve_1_exp_4_5.pdf}
+        \includegraphics[width=\linewidth]{figures/curve_1/eks_5/history_plot_2.pdf}
         \caption{The cost function \(L(\theta)\) with each iteration.}
     \end{subfigure}
     \caption{The approximate optimal reparametrization solution to test problem (1) with the corresponding loss history.}
@@ -39,31 +40,32 @@
 \begin{figure}\label{fig:curve_1_parmas_eks}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{figures/curve_1/curve_1_exp_4/neurons_error.pdf}
+        \includegraphics[width=\linewidth]{figures/curve_1/eks_5/neurons_error.pdf}
         \caption{The final cost \(E\) with the number of neurons in each hidden layer.}
         \label{fig:curve_1_neuron_error}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{figures/curve_1/curve_1_exp_4/layer_error.pdf}
+        \includegraphics[width=\linewidth]{figures/curve_1/eks_5/layer_error.pdf}
         \caption{Final cost \(E\) with the number of layers.}
         \label{fig:curve_1_layer_error}
     \end{subfigure}
     \caption{Result of ensemble training with different number of neurons and hidden layers. In Figure \ref{fig:curve_1_neuron_error} the number of layers was fixed at 2. In Figure \ref{fig:curve_1_layer_error} the number of neurons is fixed at 8 per hidden layer. The error bars denote a 80\% confidence interval found by bootstrapping.}
 \end{figure}
 
-
-
-\begin{tabular}{lrl}
-    \toprule
-    \(\bar{E} \) & Degrees of freedom & model         \\
-    \midrule
-    0.013143     & 34                 & ResNET        \\
-    0.002253     & 9391               & ResNET        \\
-    0.004567     & 30                 & Palais Layers \\
-    0.000002     & 10000              & Palais Layers \\
-    \bottomrule
-\end{tabular}
-
+\begin{table}
+    \begin{tabular}{lrl}
+        \toprule
+        \(\bar{E} \) & Degrees of freedom & model         \\
+        \midrule
+        0.013143     & 34                 & ResNET        \\
+        0.002253     & 9391               & ResNET        \\
+        0.004567     & 30                 & Palais Layers \\
+        0.000002     & 10000              & Palais Layers \\
+        \bottomrule
+    \end{tabular}
+    \caption{Insert caption }
+    \label{tab:comare_res_palais}
+\end{table}
 
 Better structures and optimization algoritmhs for deeper networks.

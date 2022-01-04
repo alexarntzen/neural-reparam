@@ -1,7 +1,22 @@
 
 \section{Optimal reparametrization}
 \subsection{Problem }
+Given transformed curves $q_1= Q(c_1)$ and $q_2 = Q(c_2)$. Find the optimal reparametrization: 
+\begin{equation}
+  \underset{\gamma \in \text{Diff}(I)^+}{\text{minimize}} \quad || q_1- \sqrt{\dot\gamma}q_2 \circ \gamma||_{L_2}.
+\end{equation}
 \subsection{Discretization}
 
 \subsection{Dynamic programing}
 \subsection{Deep reparametrization}
+Previously this problem has been by finding a basis for $\text{Diff}(I)^+ $. 
+
+Then a function to find the optimal linear combination of a subset of this basis. That is a layer on the form:
+\begin{equation}
+  f_{c}^{[l]}= id +  \sum_{i=1}^{N^{[l]}} c_i^{[l]} v_i, 
+\end{equation}
+where $v_i$ are the basis elements for $T_{\text{id}}\text{Diff}(I)^+ $.
+The full network can now be composed as 
+\begin{equation}
+  f_{c} = f_{c}^{[L]} \circ f_{c}^{[L-1]} \circ ... \circ f_{c}^{[2]} \circ f_{c}^{[1]}.
+\end{equation}

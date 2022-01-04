@@ -1,11 +1,31 @@
 
 \section{Reparametrization with neural networks}
-based on previou method
-universal approximation theorem
-Differet way to constrain the network.
+\subsection{Neural networks}
 
+
+\subsection{Approximation error bounds}
+universal approximation theorem
+based on previous method
+Differet way to constrain the network.
+\cite[Theomrem 5.1]{ryck2021} Shoed that a neural network with two hidden layers can approximate any funcin 
+
+\subsection{Neural networks as reparametrizations}
+Now since the space of neural networks are dense in $\text{Diff}(I)^+ \subset C(I)$ we do not need basis for $\text{Diff}(I)^+$. 
+  
+Instead we penalize the network so it stays in $\text{Diff}(I)^+$. 
+The loss function is then a sum of residuals we want to minimize.
+\begin{align}
+  {\cal R}_{int,\theta}(t)&= q_1(t) - \sqrt{\dot f_\theta(t)}q_2 \circ f_\theta(t) \\
+  {\cal R}_{b,\theta}&= f_\theta(0) + f_\theta(1) - 1\\ 
+  {\cal R}_{\text{Diff},\theta}(t)&= \dot f_{\theta}(t).
+\end{align}
+The derivative as before is computed using automatic differentiation. The resulting loss function is: 
+\begin{equation}
+  J(\theta) = \sum_{i=n}^{N_i}\big[w_{int}|{\cal R}_{int,\theta}(x_i)| +  w_{\text{Diff}}|{\cal R}_{\text{Diff}, \theta}(x_i)|\big]  +|{\cal R}_{b,\theta}|  + \lambda||\theta||_2,
+\end{equation}
+where $w_{int}, w_{b} $ and $w_{\text{Diff}}$ are parameters penalizing each residual, and  $\lambda$ is a regularization parameter. 
 \subsection{Discontinuous transformed curves}
-The method proposed will not necessarily work for transformed curves that are discontinuous. If the the transformed curve is discountinuous there is not guarantee that the cost function will be continuos. The optimization problem is then harder to solve, and can not be solved with the gradient based methods discussed.
+The method proposed will not necessarily work for transformed curves that are discontinuous. If the the transformed curve is discontinuous, then there is no guarantee that the cost function will be continuous. The optimization problem then hard to solve, and can not be solved with the gradient based methods discussed.
 
 A general theory of when discontinuous curves results in a discontinuous cost function will not be attempted. Instead we look at a situation when the the cost function is guaranteed to be disontinious at a point \(\theta_0\). Consider a transformed curve  \(r\) that is discontinuous at  \(a \in I\). We furthermore assume that the reparametrizations  \(f_{\theta}\) is smooth with respect to the parameters  \(\theta\),  \(f_{\theta_0}(t_0)=a\) and   \(\pdv{f}{\theta_1}|_{\theta_0}(t_0)\neq 0\) for some  \(\theta_0\) and direction  \(\theta_1\) Then along the direction  \(\theta_1\),  \(f_{\theta}\) will have a a continuous inverse in some neighborhood  \(N\) of  \(\theta_0\). Thus  since \(\sqrt{f_{\theta}'(t_0)} \geq 0\), \(r \circ f_\theta(t_0)\) and  \(\sqrt{f_{\theta}'(t_0)} r \circ f_\theta(t_0)\) will be discontinuous at \(\theta_0\). If we then assume that
 \begin{equation}
@@ -21,7 +41,7 @@ Then the cost function defined as
 \end{equation}
 will have a discontinuity at  \(\theta_0\). The cost function as defined in (0) will then be discontinuous if the discontinuities in each part of the sum does not cancel each other.
 
-The assumptions required of  \(f_{\theta}\) are not necessary for  \(E_0\) to be discontinuous. They are only meant as an example for a reasonable situation where  \(E_0\) is guaranteed to be discontinuous. For example, neural networks with a smooth sigmoidal functions will be smooth with respect their parameter.
+The assumptions required of  \(f_{\theta}\) are not necessary for  \(E_0\) to be discontinuous. They are only meant as an example for a reasonable situation where  \(E_0\) is guaranteed to be discontinuous. For example, neural networks with a smooth sigmoidal function will be smooth with respect its parameter.
 
 For transformed curves which are not continuous, but piecewise smooth there is a way to find an approximate solution to the optimal reparametrization problem. If the jumps of the discontinuous curve \(r\) are not to large, then we can use a new continuous curve \(\hat r\) that interpolates \(r\). We can find then find a bound for the resulting distance fo the two curves. This is evident by the following proposition.
 \begin{proposition}
