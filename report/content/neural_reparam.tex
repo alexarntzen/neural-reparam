@@ -45,7 +45,7 @@ The assumptions required of  \(f_{\theta}\) are not necessary for  \(E_0\) to be
 
 For transformed curves which are not continuous, but piecewise smooth there is a way to find an approximate solution to the optimal reparametrization problem. If the jumps of the discontinuous curve \(r\) are not to large, then we can use a new continuous curve \(\hat r\) that interpolates \(r\). We can find then find a bound for the resulting distance fo the two curves. This is evident by the following proposition.
 \begin{proposition}
-  Let \(\{t_i\}_{1 \leq i\leq n}\) be a strictly increasing sequence of number in the interval I, and let \(q\),\(r\), \(\hat q\) and  \(\hat r\) curves such that \(q(s_i)=\hat q(s_i)\) and \(r(s_i')=\hat r(s_i')\) for \(s_i, s_i' \in [t_i, t_i+1), 1\leq i < n\). If  \(q\),  \(r\),   \(\hat q\) and  \(\hat r\) are smooth on the intervals  \([t_i, t_{i+1})\) for  \( 1 \leq i <n\), and  \(f_\theta : I \rightarrow I\) is a function with  and parametrized by \( \theta \). Then for the two calculated distances
+  Let \(\{t_i\}_{1 \leq i\leq n}\) be a strictly increasing sequence of number in the interval I, and let \(q\),\(r\), \(\hat q\) and  \(\hat r\) curves such that \(q(s_i)=\hat q(s_i)\) and \(r(s_i')=\hat r(s_i')\) for \(s_i, s_i' \in [t_i, t_i+1), 1\leq i < n\). If  \(q\),  \(r\),   \(\hat q\) and  \(\hat r\) are smooth on the intervals  \([t_i, t_{i+1})\) for  \( 1 \leq i <n\), and  \(f_\theta : I \rightarrow I\) is a function with bounded derrivative and parametrized by \( \theta \). Then for the two calculated distances
   \begin{eqnarray}
     \hat d_n^2=\frac{1}{n}\sum_{i=1}^{n}\Big|\hat q(t_i) + \sqrt{f'_{\theta}(t_0)} \hat r \circ f_{\theta}(t_0)\Big|^2, \\
     d_n^2=\frac{1}{n}\sum_{i=1}^{n}\Big|q(t_i) + \sqrt{f'_{\theta}(t_0)} r \circ f_{\theta}(t_0)\Big|^2,
@@ -71,8 +71,9 @@ For transformed curves which are not continuous, but piecewise smooth there is a
   \end{eqnarray}
   Now define constant  \(C_{\theta}:= \sup_{t\in T} | \sqrt{f'_\theta(t)} | \). Then by the reverse triangle inequality for the 2-norm we have the bound
   \begin{align}
-    |\hat d_n - d_n |
-     & \leq \sqrt{\frac{1}{n}\sum_{i=1}^{n}\left\{\hat q(t_i) - q(t_i)  + \sqrt{f'_{\theta}(t_i)}\left[  \hat r \circ f_{\theta}(t_i) - r \circ f_{\theta}(t_i)\right]\right\}^2} \\
+    |\hat d_n - d_n | 
+      & = \Bigg| \sqrt{\frac{1}{n}\sum_{i=1}^{n}\Big|\hat q(t_i) + \sqrt{f'_{\theta}(t_0)} \hat r \circ f_{\theta}(t_0)\Big|^2}-\sqrt{\frac{1}{n}\sum_{i=1}^{n}\Big|q(t_i) + \sqrt{f'_{\theta}(t_0)} r \circ f_{\theta}(t_0)\Big|^2 } \Bigg|\\
+     & \leq \sqrt{\frac{1}{n}\sum_{i=1}^{n}\Big|\hat q(t_i) - q(t_i)  + \sqrt{f'_{\theta}(t_i)}\left[  \hat r \circ f_{\theta}(t_i) - r \circ f_{\theta}(t_i)\right]\Big|^2}\\
      & \leq \left(C_q  + C_{\theta} C_r \right)h.
   \end{align}
 \end{proof}
