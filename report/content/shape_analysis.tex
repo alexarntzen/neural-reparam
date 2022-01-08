@@ -6,7 +6,7 @@ To start the problem of analyzing curves we fist introduce the space of curves t
   \mathcal{P}:= \text{Imm}(I, \R^d) = \{c \in C^{\infty}(I, \R^d) :  c'(t) \neq  0 \ \forall \ t \in I  \}.
 \end{equation}
 The space \(\mathcal{P}\) is genrally called the \emph{pre-shape space}. Analysis of closed curves \(\text{Imm}(S^1, \R^d)\) and surfaces \(\text{Imm}(I \times I, \R^d)\) can also be done within a simmilar framework \cite{bauer2014overview}.
-The following can also be applied to immersions into other spaces than \(\R^d\). This, will be the content of section\ref{subsec:shape-lie}. 
+The following can also be applied to immersions into other spaces than \(\R^d\).
 
 Now we would like to study shapes independent of parametrization. More precisely, the space af all curve reparametrizations   \(\varphi\) is the group of orientation preserving diffeomorphisms on  \(I\)
 \begin{equation}
@@ -46,7 +46,7 @@ A reparametrization invariant Riemannian metric will then induce a reparametriza
     }
   } \int_0^1 \sqrt{G_{\gamma(t)}(\gamma'(t),\gamma'(t))} \, dt.
 \end{equation}
-A distance function on \(\mathcal{S}\) can then be obtained by \eqref{eq:distance_inf}. The Rimannian metric on \(\mathcal{P}\) also defines a unique Rimannian metric on \(\mathcal{S}\) such that the projection map from \(\mathcal{P}\)  to \(\mathcal{S}\) is a Rimannian submersion \cite[6]{bruveris1016_srvtexample}. 
+A distance function on \(\mathcal{S}\) can then be obtained by \eqref{eq:distance_inf}. The Rimannian metric on \(\mathcal{P}\) also defines a unique Rimannian metric on \(\mathcal{S}\) such that the projection map from \(\mathcal{P}\)  to \(\mathcal{S}\) is a Rimannian submersion \cite[6]{bauer2014_rprop}. 
 
 An obvious metric on \(\mathcal{P}\) is the \(L^2\) metric  given by 
 \begin{equation}
@@ -60,11 +60,11 @@ A method for imposig a metric on \(\mathcal{P}\) is to transform the curves with
   R :\mathcal{P} \rightarrow C^{\infty}(I, R^d \setminus \{0\}), \quad c \mapsto \frac{c'}{\sqrt{\vert c' \vert}}.
 \end{equation} 
 
-The SRVT has several properies wich is not proved here; for a thoroguh  see \cite{bruveris1016_srvtexample,bauer2014_rprop}. Firstly, as stated in equation \eqref{eq:SRVT} the SRVT is not injective, since it invariant under translation. It will however, be a diffeomorphism between the space of curves with zero starting position \(\mathcal{P}_* : = \{c \in \mathcal{P}: c(0) = 0\} \) and \(C^{\infty}(I, \R^d \setminus \{0\}\) with an analytical inverse on the form 
+The SRVT has several properies wich is not proved here; for a thoroguh  see \cite{bruveris1016_srvtexample,bauer2014_rprop}. Firstly, as stated in equation \eqref{eq:SRVT} the SRVT is not injective since it invariant under translation. It will however, be a diffeomorphism between the space of curves with zero starting position \(\mathcal{P}_* : = \{c \in \mathcal{P}: c(0) = 0\} \) and \(C^{\infty}(I, \R^d \setminus \{0\})\). Between these spaces the SRVT also has an analytical inverse on the form 
 \begin{equation}
   R^{-1}(q)(t) = \int_0 ^t q \vert q\vert \,d\tau.
 \end{equation}
-Furthermore, imposing the \(L^2\) inner product on\((C^{\infty}(I, R^d), \langle \cdot , \cdot \rangle_{L^2} )\) gives an inner product space. Thus, the SRVT imposes a pullback distance metric and riemanninan metric on \(\mathcal{P}_*\). The pullback distance metric for the two curves \(c_1, c_2 \in \mathcal{P}_*\) will be given by
+Furthermore, imposing the \(L^2\) inner product on\((C^{\infty}(I, R^d), \langle \cdot , \cdot \rangle_{L^2} )\) gives an inner product space. Thus, the SRVT imposes a pullback distance metric and a riemanninan metric on \(\mathcal{P}_*\). The pullback distance metric for the two curves \(c_1, c_2 \in \mathcal{P}_*\) will be given by
 \begin{equation}\label{eq:sob_pullback_dist}
   d_{\mathcal{P}_*}(c_1, c_2) = \norm{R(c_1) - R(c_2)}_{L^2}.
 \end{equation}
@@ -81,7 +81,7 @@ The space \(C^{\infty}(I, \R^d \setminus \{0\} \) is flat, but not convex. There
 and geodesic distance corresponds to the metric \(d_{\mathcal{P}_*}\). For transformed curves not connected by a straight line there are two cases. Either the geodesic of the metric \(G\) will not exist, or the geodesic distance induced by \(G\) will not correspond to the  distance \(d_{\mathcal{P}_*}\). When \(d \geq 3\),  we can make lines in \(C^{\infty}(I, \R^d )\) into paths in \(C^{\infty}(I, \R^d \setminus \{0\}\) by arbitrary small pertubations. Thus, the distance given by \(d_{\mathcal{P}_*}\) will be the induced geodesic distanc of \(G\). As a remedy for \(d \leq 2 \), it is possible to consider geodesic completions of \(\mathcal{P}_* \) as discussed in \cite{bruveris1016_srvtexample} and more generally in \cite{bruveris2014_geocomp}. 
 
 
-To extent the Riemannian geometry of to the shape space we note that the SRVT has the equivariance property: 
+To extend the Riemannian geometry of \(\mathcal{P}\) to the shape space, we note that the SRVT has the equivariance property: 
 \begin{equation}
   R(c \circ \varphi) = \sqrt{\varphi'}R(c) \circ \varphi \quad \forall \ \varphi \in \text{Diff}^+, c \in \mathcal{P}. 
 \end{equation}
@@ -90,7 +90,7 @@ Therefore, we deduce by integration or \cite[Theomrem 3.1]{bauer2014_rprop} that
   \norm{R(c_1) - \sqrt{\varphi'} R(c_2)\circ \varphi}_{L^2}. 
 \end{equation}
 
-The optimal solution to the optimization problem above will not nessearly exist in \(\DiffI\). For examples of curves that lead to optimal reparametrization outside \(\DiffI\) see \cite[p.11]{bauer2014overview} and \cite[3.2]{woien2019}. One problem is that optimal solutions  have vanishing derrivatives. Thus the optimal solution is not a diffeomorphism and does not have a inverse. \citeauthor{bruveris1016_srvtexample} \cite{bruveris1016_srvtexample}  remidies this problem by showing that for curves \(c_1, c_2 \in C^2(I,\R^d\) there exists optimal reparametrizations \(\varphi_1^*, \varphi_2^* \in \overline{ \Gamma}\) that minimizes
+The optimal solution to the optimization problem above will not nessearly exist in \(\DiffI\). For examples of curves that lead to optimal reparametrization outside \(\DiffI\) see \cite[p.11]{bauer2015why} and \cite[3.2]{woien2019}. One problem is that optimal solutions  have vanishing derrivatives. Thus the optimal solution is not a diffeomorphism and does not have a inverse. There are metrics on \(\mathcal{P}\) for wich the optimal diffeomorphism is guaranteed as shown in \cite{bauer2014overview}.  \citeauthor{bruveris1016_srvtexample} \cite{bruveris1016_srvtexample}  remidies this problem by showing that for curves \(c_1, c_2 \in C^2(I,\R^d\) there exists optimal reparametrizations \(\varphi_1^*, \varphi_2^* \in \overline{ \Gamma}\) that minimizes
 \begin{equation}
   d_{\mathcal{P}_*}(c_1 \circ \varphi_1, c_2 \circ \varphi2). 
 \end{equation}

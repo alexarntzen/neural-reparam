@@ -10,9 +10,9 @@ Differet way to constrain the network.
 \cite[Theomrem 5.1]{ryck2021} Shoed that a neural network with two hidden layers can approximate any funcin 
 
 \subsection{Neural networks as reparametrizations}
-Now since the space of neural networks are dense in $\text{Diff}(I)^+ \subset C(I)$ we do not need basis for $\text{Diff}(I)^+$. 
+Now since the space of neural networks are dense in  \(\text{Diff}(I)^+ \subset C(I)\) we do not need basis for  \(\text{Diff}(I)^+\). 
   
-Instead we penalize the network so it stays in $\text{Diff}(I)^+$. 
+Instead we penalize the network so it stays in  \(\text{Diff}(I)^+\). 
 The loss function is then a sum of residuals we want to minimize.
 \begin{align}
   {\cal R}_{int,\theta}(t)&= q_1(t) - \sqrt{\dot f_\theta(t)}q_2 \circ f_\theta(t) \\
@@ -23,7 +23,7 @@ The derivative as before is computed using automatic differentiation. The result
 \begin{equation}
   J(\theta) = \sum_{i=n}^{N_i}\big[w_{int}|{\cal R}_{int,\theta}(x_i)| +  w_{\text{Diff}}|{\cal R}_{\text{Diff}, \theta}(x_i)|\big]  +|{\cal R}_{b,\theta}|  + \lambda||\theta||_2,
 \end{equation}
-where $w_{int}, w_{b} $ and $w_{\text{Diff}}$ are parameters penalizing each residual, and  $\lambda$ is a regularization parameter. 
+where  \(w_{int}, w_{b} \) and  \(w_{\text{Diff}}\) are parameters penalizing each residual, and   \(\lambda\) is a regularization parameter. 
 \subsection{Discontinuous transformed curves}
 The method proposed will not necessarily work for transformed curves that are discontinuous. If the the transformed curve is discontinuous, then there is no guarantee that the cost function will be continuous. The optimization problem then hard to solve, and can not be solved with the gradient based methods discussed.
 
@@ -78,6 +78,6 @@ For transformed curves which are not continuous, but piecewise smooth there is a
   \end{align}
 \end{proof}
 
-As a consequence if we have two smooth curve with piecewise constant interplants \(r, q\) that results i in the cost function \(E\) defined by [0]. If we then construct a continuous and piecewise linear function \(\hat r\) interpolating \(r\) at \(\{t_i\}, 1 \leq i <n\). Then replacing \(r\) by \(\hat r\) results in cost function $\hat{E}$ such that \(|\hat{E} - E |= \mathcal{O}(1/n)\). 
+As a consequence if we have two smooth curve with piecewise constant interplants \(r, q\) that results i in the cost function \(E\) defined by [0]. If we then construct a continuous and piecewise linear function \(\hat r\) interpolating \(r\) at \(\{t_i\}, 1 \leq i <n\). Then replacing \(r\) by \(\hat r\) results in cost function  \(\hat{E}\) such that \(|\hat{E} - E |= \mathcal{O}(1/n)\). 
 
-As seen in chapter \ref{subsec:shape-lie} motion capture data can be viewed as a smooth curve in \(SO(3)\). If this motion is record at at discrete times, then the resulting shortest path interpolation results in a SRVT that is piecewise constant. Thus for two motions we have two smooth curves with piecewise constant interplants \(r, q\). The optimal parametrization problem results in the cost function \(E\) defined by [0]. If we then construct a continuous and piecewise linear function \(\hat r\) interpolating \(r\) at \(\{t_i\}, 1 \leq i <n\). Then replacing \(r\) by \(\hat r\) results in cost function $\hat{E}$ such that \(|\hat{E} - E |= \mathcal{O}(1/n)\). 
+As seen in chapter \ref{subsec:shape-lie} motion capture data can be viewed as a smooth curve in \(SO(3)\). If this motion is record at at discrete times, then the resulting shortest path interpolation results in a SRVT that is piecewise constant. Thus for two motions we have two smooth curves with piecewise constant interplants \(r, q\). The optimal parametrization problem results in the cost function \(E\) defined by [0]. If we then construct a continuous and piecewise linear function \(\hat r\) interpolating \(r\) at \(\{t_i\}, 1 \leq i <n\). Then replacing \(r\) by \(\hat r\) results in cost function  \(\hat{E}\) such that \(|\hat{E} - E |= \mathcal{O}(1/n)\). 

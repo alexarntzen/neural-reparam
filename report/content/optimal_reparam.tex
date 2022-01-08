@@ -1,22 +1,64 @@
 
-\section{Optimal reparametrization}
-\subsection{Problem }
-Given transformed curves $q_1= Q(c_1)$ and $q_2 = Q(c_2)$. Find the optimal reparametrization: 
-\begin{equation}
-  \underset{\gamma \in \text{Diff}(I)^+}{\text{minimize}} \quad || q_1- \sqrt{\dot\gamma}q_2 \circ \gamma||_{L_2}.
+\subsection{Optimal reparametrization}
+The analysis of unparametrized curves in the shape analysis framework results in an optimization problem. Specifically, using SRVT on a pair of curves \(c_1, c_2\), produces a pair of curves in SRV form \(q_1, q_2\) where want to find the optimal reparametrization \(\varphi \in \DiffI\) minimizeing: 
+\begin{equation}\label{eq:optimal_reparam}
+  E(\varphi):=\norm{q_1- \sqrt{\dot\varphi}q_2 \circ \varphi}_{L_2}^2.
 \end{equation}
-\subsection{Discretization}
+Mathods to solve this optimizaiton problem are mainly divided into tow categries; gradient based and dyanmic probemming. \todo{repraze and give citatiosn}.
 
-\subsection{Dynamic programing}
-\subsection{Deep reparametrization}
-Previously this problem has been by finding a basis for $\text{Diff}(I)^+ $. 
+\subsubsection{A dynamic approach}
+\citeauthor{bauer2017dp} \cite{bauer2017dp} consider an algorithm for finding an optimal parametrization to \eqref{eq:optimal_reparam} wich is based on dynamic programming. The method first discrtizes the interval \(I\) into  \(\mathcal{I} = \{\tau_0, ..., \tau_M\}\). Then the reparametrizations considered is resticted increasing pieciwise linerar functions \(\varphi\) such that
+\begin{equation*}
+ \varphi(\mathcal{I}) \subset \mathcal{I}. 
+\end{equation*}
+Finding the optimal reparametrization in this restricted search space reduces to finding the optimal path through the grid \(\mathcal{I}\times\mathcal{I}\)  Thus, the problem of minimizing the cost function \(E(\varphi)\) will have the subproblems 
+\begin{equation}
+  H(i, j) = \min_{\varphi(i) = j} \int_0^i \vert q_1- \sqrt{\dot\varphi }q_2 \circ \varphi \vert^2 \, dt,
+\end{equation}
+where \(i,j \in \mathcal{I}\). To relate the subproblems define for any \(k <i, l<j \in \mathcal{I} \) the local cost function 
+\begin{equation}
+  \overline E(k,l,i,j) =   \int_k^l \vert q_1- \sqrt{\dot\varphi_{k,l,i,j} }q_2 \circ \varphi_{k,l,i,j} \vert^2 \, dt ,
+\end{equation}
+where \(\varphi_{k,l,i,j} \) is the linear funciton such that \(\varphi_{k,l,i,j}(k)=l\) and \(\varphi_{k,l,i,j}(i)=j\). Now the subproblems \(E(i,j)\) will be related by 
+\begin{equation}
+  H(i,j)  = \min_{k<i,l<j\in \mathcal{I}}\overline{E}(k,l,i,j) + H(k,l), 
+\end{equation}
+Thus optimal reparametrization \(\varphi_\text{opt}\) can be found by recursively computing \(E(\varphi_\text{opt})= H(M,M)\) while storing the intermediate values \(H(i,j), (k,l)\). The optimal reparametrization will then be the path through \(\mathcal{I}\times\mathcal{I}\) given recursively by intermediate values. \todo{comment on depth}
 
-Then a function to find the optimal linear combination of a subset of this basis. That is a layer on the form:
+A different approach to finding the optimal 
+Previously this problem has been by finding a basis for  \(\text{Diff}^+(I) \). 
+
+\subsubsection{Deep reparametrization}
+\citeauthor{jørgen2021} \cite{jørgen2021} presents a new gradient based algorithm for finding the optimal reparametrization wich is named deep reparametrization. The algorithm is isnpired by anoter gradient based algorithm where the optimal reparametrization \(\overline \gamma\) is found by a composition of diffeomorphisms
 \begin{equation}
-  f_{c}^{[l]}= id +  \sum_{i=1}^{N^{[l]}} c_i^{[l]} v_i, 
+  \overline \gamma = \gamma_1 \circ \gamma_2 \circ ... \circ \gamma_m, 
 \end{equation}
-where $v_i$ are the basis elements for $T_{\text{id}}\text{Diff}(I)^+ $.
-The full network can now be composed as 
+In this algorhm a basis \((v_i)_{i=1}^{N}\) for a subspace \(V\) of \( T_{\id}\DiffI\) is needed. Then, for each iteration \(n\), the next diffeomorphisms \(\gamma_{n+1}\) is is computed by projecting the Riemannian gradient of 
 \begin{equation}
-  f_{c} = f_{c}^{[L]} \circ f_{c}^{[L-1]} \circ ... \circ f_{c}^{[2]} \circ f_{c}^{[1]}.
+  E^{r_n}(\gamma) = E(\gamma_1 \circ \gamma_2 \circ ... \circ \gamma_n \circ \gamma),   
 \end{equation}
+onto \(V\). Denoting this projected gradient by \(\nabla E_{\id}^{r_r}\) the next diffeomorphism is given by 
+\begin{equation}
+  \gamma_{n+1} = \id + \eta \nabla E_{\id}^{r_r} 
+\end{equation}
+, where \(\eta\) is a step size determined such that \(\overline \gamma_{n+1} \in \DiffI\) 
+
+The deep reparametrization algorithm produces similar solutions as the method previously described, but the optimization procedure is different. Instead of determining each diffeomorphism sequentially, one considers the composition of diffeomorphisms 
+\begin{equation}
+  F_{C} = f_{c^{[L]}}\circ f_{c^{[L-1]}} \circ \cdots \circ f_{c^{[2]}} \circ f_{c^{[1]}},
+\end{equation}
+where \(C = \{c^{[i]}_{i=1}\). As before, each diffeomorphism \(f_{c}\) has the form 
+\begin{equation}
+  f_{c}= \id +  \sum_{i=1}^{L} c_i v_i, 
+\end{equation}
+where \(c \in \R^N \). 
+
+Futhermore, analytcal solutions of the integral \eqref{eq:srvt_reparam} is genrally not available. Therfore, the integral is discetized with the comopsite trapezoid rule resulting in the cost function 
+\begin{equation}
+  \hat E(C) = \frac{1}{N} \sum_{i = 1}^N {\vert q(x_i)- \sqrt{ F_C'(x_i)}q_2 \circ F_C(x_i) \vert^2}, 
+\end{equation}
+where \((x_i)_{i=1}^N\) denotes the \(N\) equidistant points discetizeing \(I\). 
+
+The reparametrization problem has thereby been reduced to a usual parameter optimization problem. This problem can then be solved by a standard gradient-based optimization algorithm such as BFGS. Notably, deep reparametrization has been implemented using automatic differentiation. In this framework, the gradients of functions and their compositions are available. Thus gradient-based algorithms can be implemented efficiently.
+
+Finally, the method implements a scaling of parameters ensuring that \(F_C' \) is strictly positive. Specifically, if at any computed derivative of layer  \(f_{c^[l]}\) is greater than some predetermined \(\epsilon\), then \(c^[l]\) are scaled. 

@@ -1,22 +1,23 @@
 \documentclass{article}
 
 \include{setup.tex}
+\include{local_setup.tex}
+
 \graphicspath{{..}}
+\addbibresource{ref.bib}
 
 \title{Specialization Project}
 
 \author{Alexander Johan Arntzen }
 
 \date{\today}
-
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
 \maketitle
 \tableofcontents
-
 \include{content/introduction.tex}
-\include{content/theory.tex}
+% \include{content/theory.tex}
 \include{content/shape_analysis.tex}
 \include{content/optimal_reparam.tex}
 \include{content/neural_reparam.tex}
@@ -25,12 +26,10 @@
 \include{content/experiments.tex}
 \section{Conclusion}
 
-
-
 \section*{Appendix}
 The code for this project can be found at \url{https://github.com/alexarntzen/prosjektoppgave}
-\cite{wien2019ASM},\cite{celledoni2016}, \cite{mocap} \cite{bauer2015why}, \cite{jørgen2021}
-\cite{bauer2014overview}
+Motion capture by 
+\cite{mocap}
 \printbibliography
 \end{document}
 

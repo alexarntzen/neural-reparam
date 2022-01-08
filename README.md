@@ -5,9 +5,7 @@
 
 # Fordypningsprosjekt
 Project for the subjet TMA4500 - Industrial Mathematics, Specialization Project at NTNU. 
-
-The tests are placed in `test/` directory. 
-
+The code is built upon. 
 To run all the test run: 
 
 ```
