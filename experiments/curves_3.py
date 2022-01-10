@@ -1,7 +1,7 @@
 """These curves are not the same mod Diff+, now we transormd c_2 , r=SRVT(q) by x**3"""
 import torch
 from math import pi, sqrt
-from deep_reparametrization.plotting import plot_curve
+from neural_reparam.plotting import plot_curve
 
 
 # parametrization

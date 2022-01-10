@@ -3,7 +3,7 @@ from setuptools import setup
 setup(
     name="fordypningsoppgave",
     version="0.1",
-    packages=["experiments", "deep_reparametrization"],
+    packages=["experiments", ""],
     url="",
     license="",
     author="Alexander Johan Arntzen",

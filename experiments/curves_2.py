@@ -1,7 +1,7 @@
 """These curves are not the same mod Diff+"""
 import torch
 from math import pi, sqrt
-from deep_reparametrization.plotting import plot_curve, plot_curve_1d
+from neural_reparam.plotting import plot_curve, plot_curve_1d
 
 
 # parametrization

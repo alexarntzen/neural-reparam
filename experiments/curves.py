@@ -1,7 +1,7 @@
 """These curves are the same mod DIff + """
 import torch
-from deep_reparametrization.plotting import plot_curve
-from deep_reparametrization.helpers import get_pc_curve, get_pl_curve
+from neural_reparam.plotting import plot_curve
+from neural_reparam.interpolation import get_pc_curve, get_pl_curve
 from math import pi
 
 

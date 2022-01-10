@@ -1,22 +1,20 @@
-
 \section{Shape analysis}
 \subsection{Definitions and motivation}
-To start the problem of analyzing curves we fist introduce the space of curves that are considered in this project. We will follow the approxach given by \citeauthor[]{bauer2015why} in \cite{bauer2015why}. The curves we will consider will be the space of all immersions from the interval  \(I = [0, 1]\) to  \(\R^d\)
+To start the problem of analyzing curves we fist introduce the space of curves considered in this project.  To that end, we will follow the approach given by \citeauthor{bauer2015why} in \cite{bauer2015why}. The curves we will consider will be the space of all immersions from the interval  \(I = [0, 1]\) to  \(\R^d\)
 \begin{equation}
   \mathcal{P}:= \text{Imm}(I, \R^d) = \{c \in C^{\infty}(I, \R^d) :  c'(t) \neq  0 \ \forall \ t \in I  \}.
 \end{equation}
-The space \(\mathcal{P}\) is genrally called the \emph{pre-shape space}. Analysis of closed curves \(\text{Imm}(S^1, \R^d)\) and surfaces \(\text{Imm}(I \times I, \R^d)\) can also be done within a simmilar framework \cite{bauer2014overview}.
-The following can also be applied to immersions into other spaces than \(\R^d\).
+This space \(\mathcal{P}\) is generally called the \emph{pre-shape space}. Although we will restrict ourselves to the study of open curves, analysis of closed curves \(\text{Imm}(S^1, \R^d)\) and surfaces \(\text{Imm}(I \times I, \R^d)\) has also been investigated with a similar framework \cite{bauer2014overview}.
 
-Now we would like to study shapes independent of parametrization. More precisely, the space af all curve reparametrizations   \(\varphi\) is the group of orientation preserving diffeomorphisms on  \(I\)
+Now we would like to study shapes independent of parametrization. More precisely, we consider the space of all reparametrizations \(\varphi\) as the group of orientation preserving diffeomorphisms of \(I\)
 \begin{equation}
   \text{Diff}^+(I) = \{\varphi \in C^{\infty}(I,I): \varphi(0) = 0, \varphi(1) = 1, \varphi'(t) > 0 \ \forall \ t \in I \}.
 \end{equation}
-Furthermore, for a reparametrization  \(\varphi \) and a curve  \(c\)a group action can be defined by  \(c \circ \varphi\). Thus we can define the space of parameterized curves \(\mathcal{S}\) as the quotient space under this group action,
+Furthermore, for a reparametrization  \(\varphi \) and a curve  \(c\) a group action can be defined by  \(c \circ \varphi\). Thus we can define the space of parameterized curves \(\mathcal{S}\) as the quotient space under this group action,
 \begin{equation}
   \mathcal{S} := \mathcal{P} \ / \ {\text{Diff}^+(I)}.
 \end{equation}
-The space  \(\mathcal{S}\) is called the \emph{shape space} an with elements called \emph{shapes}. Furthermore, the space \(\mathcal{S}\) is iteself a infinite dimentional manifold with the projection map beeing a submersion. 
+Notably, space  \(\mathcal{S}\) is generally called the \emph{shape space} and contains with elements called \emph{shapes}. Furthermore, the space \(\mathcal{S}\) is itself an infinite-dimensional manifold, with the projection map being a submersion. 
 
 \subsection{Distance on shape space}
 To find a distance function \(d_{\mathcal{S}}\) on \(\mathcal{S}\) we start with distance on \(\mathcal{\mathcal{P}}\) that is \emph{reparametrization invariant}. That is, \(d_\mathcal{P} : \mathcal{P} \times P \rightarrow (0, \infty)\) has the property that for all  \(c_1, c_2 \in \mathcal{P}\)
@@ -24,19 +22,19 @@ To find a distance function \(d_{\mathcal{S}}\) on \(\mathcal{S}\) we start with
   d_{\mathcal{P}}(c_1, c_2)=d_{\mathcal{P}}(c_1 \circ \varphi, c_2\circ \varphi) \quad \forall \varphi \in \text{Diff}^+.
 \end{equation}
 
-A reparametrization invariant distance funcition on \(\mathcal{P}\) will not nessearly be a distance function on \(S\) since  that distance between representatives of each shape has to be the same. Thus, a distance function on \(\mathcal{S}\) will we defined as. 
+A reparametrization invariant distance function on \(\mathcal{P}\) will not necessarily be a distance function on \(S\) since  that distance between representatives of each shape has to be the same. Thus, a distance function on \(\mathcal{S}\) will we defined as. 
 \begin{equation}
   d_\mathcal{S} ([c_1],[c_2]) := \inf_{\varphi \in \text{Diff}^+}{  d_{\mathcal{P}}(c_1,c_2 \circ \varphi)},
   \label{eq:distance_inf}
 \end{equation} 
 where  \([c_1]\) and  \([c_2]\) are the shapes with reparametrizations \(c_1\) and  \(c_2\). 
 
-\subsection{Rimannian metric on shape space}
-As remarked note in \cite{bauer2014overview} the the shape space \(\mathcal{S}\) inherently non-linear. Therefore we impose a \emph{reparametrization invariant Rimannian metric}  on \(\mathcal{P}\). That is, a metric \(G\) such that for all \( c \in \mathcal{P}\) and \(h,k \in C^\infty\)
+\subsection{Riemannian metrics on shape space}
+As remarked in \cite{bauer2014overview}, the the shape space \(\mathcal{S}\) is inherently non-linear. Therefore we impose a \emph{reparametrization invariant Riemannian metric}  on \(\mathcal{P}\). That is, a Riemannian metric \(G\) such that for all \( c \in \mathcal{P}\) and \(h,k \in  T_c \mathcal{P} = C^\infty(I, \R^d) \)
 \begin{equation}
   G_c(h,k) = G_{c \circ \varphi}(h\circ \varphi, k \circ \varphi) \quad \forall \varphi \in \text{Diff}^+.
 \end{equation}
-A reparametrization invariant Riemannian metric will then induce a reparametrization invariant induced geodesic distance given by 
+A reparametrization invariant Riemannian metric will then induce a reparametrization invariant  geodesic distance given by 
 \begin{equation}
   d_\mathcal{P}(c_1, c_2) = \inf_{
     \substack{
@@ -46,61 +44,10 @@ A reparametrization invariant Riemannian metric will then induce a reparametriza
     }
   } \int_0^1 \sqrt{G_{\gamma(t)}(\gamma'(t),\gamma'(t))} \, dt.
 \end{equation}
-A distance function on \(\mathcal{S}\) can then be obtained by \eqref{eq:distance_inf}. The Rimannian metric on \(\mathcal{P}\) also defines a unique Rimannian metric on \(\mathcal{S}\) such that the projection map from \(\mathcal{P}\)  to \(\mathcal{S}\) is a Rimannian submersion \cite[6]{bauer2014_rprop}. 
+Then, a distance function on \(\mathcal{S}\) can then be obtained by \eqref{eq:distance_inf}. The Riemannian metric on \(\mathcal{P}\) also defines a unique Riemannian metric on \(\mathcal{S}\) such that the projection map from \(\mathcal{P}\) to \(\mathcal{S}\) is a Riemannian submersion \cite[Section 6]{bauer2014_rprop}. 
 
 An obvious metric on \(\mathcal{P}\) is the \(L^2\) metric  given by 
 \begin{equation}
   G_c(h,k) = \int_I \langle h, k\rangle \vert c'\vert \,dt. 
 \end{equation}
-However as shown in \cite{michor2003vanishingl2} and \cite{michor2004vanishing_generalized} the \(L^2\) metric induces a vanishing distance on shape space \(\mathcal{S}\). This means that for any \(c_1, c_2 \in \mathcal{P}\) we can curves \(\gamma \in C^{\infty}([0,1],\mathcal{P})\) starting at \(c_1\) ending at \(c_2\) of arbitrary short length. As a consclusin the \(L^2\) metric is useless for comparing shapes, and so we must find another metric. 
-
-\subsection{Square root velocity transform}
-A method for imposig a metric on \(\mathcal{P}\) is to transform the curves with a diffeomorphism to another Riemannian manifold resulting in a pullback metric on \(\mathcal{P}\). A popular such transformation introduced in \cite{srivastava2011_srvt} is the \emph{sqare root velocity transform} (SRVT), wich is given by 
-\begin{equation}\label{eq:SRVT}
-  R :\mathcal{P} \rightarrow C^{\infty}(I, R^d \setminus \{0\}), \quad c \mapsto \frac{c'}{\sqrt{\vert c' \vert}}.
-\end{equation} 
-
-The SRVT has several properies wich is not proved here; for a thoroguh  see \cite{bruveris1016_srvtexample,bauer2014_rprop}. Firstly, as stated in equation \eqref{eq:SRVT} the SRVT is not injective since it invariant under translation. It will however, be a diffeomorphism between the space of curves with zero starting position \(\mathcal{P}_* : = \{c \in \mathcal{P}: c(0) = 0\} \) and \(C^{\infty}(I, \R^d \setminus \{0\})\). Between these spaces the SRVT also has an analytical inverse on the form 
-\begin{equation}
-  R^{-1}(q)(t) = \int_0 ^t q \vert q\vert \,d\tau.
-\end{equation}
-Furthermore, imposing the \(L^2\) inner product on\((C^{\infty}(I, R^d), \langle \cdot , \cdot \rangle_{L^2} )\) gives an inner product space. Thus, the SRVT imposes a pullback distance metric and a riemanninan metric on \(\mathcal{P}_*\). The pullback distance metric for the two curves \(c_1, c_2 \in \mathcal{P}_*\) will be given by
-\begin{equation}\label{eq:sob_pullback_dist}
-  d_{\mathcal{P}_*}(c_1, c_2) = \norm{R(c_1) - R(c_2)}_{L^2}.
-\end{equation}
-Similarly, the pullback Riemannian metric on \(\mathcal{P}_*\) will be an \emph{first order Sobolev metric} defined by the arch length integral
-\begin{equation}
-  G_c(h,k) = \int_I \langle D_s h^\perp ,D_s^\perp k \rangle+\frac{1}{4}\langle D_s h,v\rangle \langle D_s k,v\rangle \,ds,
-\end{equation}
-where \(ds = \vert c' \vert\,dt\), \(v = D_s c = \frac{c'}{\vert c'\vert}\) is the curve of unit length tangents of \(c\) and \(D_s h \perp = D_s h  - \langle D_s h,v\rangle v\) is the projection of \(D_s h\) onto the space of curves orhtognal to \(v\). \todo{remark on properties of this metric}
-
-The space \(C^{\infty}(I, \R^d \setminus \{0\} \) is flat, but not convex. Therefore, when the SRVT of any two curves \(R(c_1), R(c_2)\) belong to the same convex subset of \(C^{\infty}(I, \R^d \setminus \{0\})\). Then the  godecis from \(c_1\) to \(c_2\) is given by 
-\begin{equation}
-  \gamma(t) = R^{-1}[R(c_2)t +  R(c_1)(1-t)], 
-\end{equation}
-and geodesic distance corresponds to the metric \(d_{\mathcal{P}_*}\). For transformed curves not connected by a straight line there are two cases. Either the geodesic of the metric \(G\) will not exist, or the geodesic distance induced by \(G\) will not correspond to the  distance \(d_{\mathcal{P}_*}\). When \(d \geq 3\),  we can make lines in \(C^{\infty}(I, \R^d )\) into paths in \(C^{\infty}(I, \R^d \setminus \{0\}\) by arbitrary small pertubations. Thus, the distance given by \(d_{\mathcal{P}_*}\) will be the induced geodesic distanc of \(G\). As a remedy for \(d \leq 2 \), it is possible to consider geodesic completions of \(\mathcal{P}_* \) as discussed in \cite{bruveris1016_srvtexample} and more generally in \cite{bruveris2014_geocomp}. 
-
-
-To extend the Riemannian geometry of \(\mathcal{P}\) to the shape space, we note that the SRVT has the equivariance property: 
-\begin{equation}
-  R(c \circ \varphi) = \sqrt{\varphi'}R(c) \circ \varphi \quad \forall \ \varphi \in \text{Diff}^+, c \in \mathcal{P}. 
-\end{equation}
-Therefore, we deduce by integration or \cite[Theomrem 3.1]{bauer2014_rprop} that the metrics \(G\) and \(d_{\mathcal{P}_*}\) are reparametrization invariant. The reparametrization invariant metrics can then be extended to \(\mathcal{S}_* : =  \{[c] \in \mathcal{S}: c(0)=0\}\) by \eqref{eq:distance_inf}. For finding distances and geodesics between two shapes \([c_1], [c_2]\in \mathcal{S}_*\) we need to find a reparametrization \(\varphi \in \DiffI\) that minimizes 
-\begin{equation} \label{eq:srvt_reparam}
-  \norm{R(c_1) - \sqrt{\varphi'} R(c_2)\circ \varphi}_{L^2}. 
-\end{equation}
-
-The optimal solution to the optimization problem above will not nessearly exist in \(\DiffI\). For examples of curves that lead to optimal reparametrization outside \(\DiffI\) see \cite[p.11]{bauer2015why} and \cite[3.2]{woien2019}. One problem is that optimal solutions  have vanishing derrivatives. Thus the optimal solution is not a diffeomorphism and does not have a inverse. There are metrics on \(\mathcal{P}\) for wich the optimal diffeomorphism is guaranteed as shown in \cite{bauer2014overview}.  \citeauthor{bruveris1016_srvtexample} \cite{bruveris1016_srvtexample}  remidies this problem by showing that for curves \(c_1, c_2 \in C^2(I,\R^d\) there exists optimal reparametrizations \(\varphi_1^*, \varphi_2^* \in \overline{ \Gamma}\) that minimizes
-\begin{equation}
-  d_{\mathcal{P}_*}(c_1 \circ \varphi_1, c_2 \circ \varphi2). 
-\end{equation}
-The space of reparametrizations is now extened to 
-\begin{equation}
-  \overline \Gamma = \{\gamma : I \rightarrow I : \gamma \text{abs. cont. }, \gamma(0) = 0, \gamma(1) = 1, \gamma' \geq 0 \text{a.e.}\}.
-\end{equation}
-
-\subsection{Shape analysis on Lie groups}\label{subsec:shape-lie}
-In \cite{celledoni2016} an extension of the SRVT to Lie groups is intrudoces. 
-Reparametrization equivarint 
-\todo{definins and commetns}
-\todo{motion capture data}
+However, as shown in \cite{michor2003vanishingl2} and \cite{michor2004vanishing_generalized} the \(L^2\) metric induces a vanishing distance on shape space \(\mathcal{S}\). This means that for any \(c_1, c_2 \in \mathcal{P}\) we can construct curves \(\gamma \in C^{\infty}([0,1],\mathcal{P})\) starting at \(c_1\) ending at \(c_2 \circ \varphi\) of arbitrary short length. As a conclusion the \(L^2\) metric is useless for comparing shapes, and so we must find another metric. 
