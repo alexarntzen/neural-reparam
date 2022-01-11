@@ -1,25 +1,23 @@
-\documentclass{article}
+\documentclass{amsart}
 
 \include{setup.tex}
-\include{local_setup.tex}
-
-\graphicspath{{..}}
-\addbibresource{ref.bib}
-
-\title{Specialization Project}
-\author{Alexander Johan Arntzen }
+\input{local_setup.tex}
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+\usepackage{amsaddr} % only with amsmath
+\title{Reparametrization of curves by neural networks}
+\author{Alexander Johan Arntzen}
 \date{\today}
-
+\address{Norwegian University of Science and Technology \\ Department of Mathematical Sciences}
+% \affil{Norwegian University of Science and Technology \\ Department of Mathematical Sciences}
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 \begin{document}
 
 \maketitle
-\include{content/abstract.tex}
+\input{content/abstract.tex}
 \tableofcontents
 \include{content/introduction.tex}
 % \include{content/theory.tex}
 \include{content/shape_analysis.tex}
-\include{content/srvt.tex}
 \include{content/optimal_reparam.tex}
 \include{content/neural_reparam.tex}
 \include{content/experiments.tex}

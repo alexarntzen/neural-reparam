@@ -1,4 +1,4 @@
-In this experiment, we test if it is possible to reparametrize curves with piecewise constant and linear SRV form. As test subjects, we interpolate \(r\) and \(q\) given in subsection \ref{subsec:case_1}. The resulting trajectory of the interpolated curves is shown in Figure \ref{fig:curve_1_pc}. Furthermore, by the arguments in section \ref{subsec:discont_curves}, we would not expect a gradient-based optimizer to work in the piecewise constant problem. However, it should work for the continuous problem. As shown in Figure \ref{fig:curve_1_pc_pl_example}, the BFGS algorithm was not able to optimize the cost function corresponding to the piecewise constant interpolated curves. However, the solution to the continuously interpolated problem closely approximated the optimal reparametrization of the original problem. 
+In this experiment, we test if it is possible to reparametrize curves with piecewise constant and piecewise linear SRV form. As test subjects, we interpolate \(r\) and \(q\) given in subsection \ref{subsec:case_1}. The resulting trajectory of the interpolated curves is shown in Figure \ref{fig:curve_1_pc}. Furthermore, by the arguments in section \ref{subsec:discont_curves}, we would not expect a gradient-based optimizer to work for the piecewise constant problem. However, it should work for the continuous problem. As shown in Figure \ref{fig:curve_1_pc_pl_example}, the BFGS algorithm was not able to optimize the cost function corresponding to the piecewise constant interpolated curves. However, the solution to the piecewise linearly interpolated problem closely approximated the optimal reparametrization of the original problem.
 \begin{figure}[b]
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
@@ -17,7 +17,7 @@ In this experiment, we test if it is possible to reparametrize curves with piece
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/curve_1_pc/eks_2/plot_0_0.pdf}
-        \caption{The approximate optimal reparametrization and analytical solution.}\label{fig:curve_1_pc_solution}
+        \caption{The approximate optimal reparametrization of discontinuous problem}\label{fig:curve_1_pc_solution}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
@@ -27,7 +27,7 @@ In this experiment, we test if it is possible to reparametrize curves with piece
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/curve_1_pl/exp_2/plot_0_0.pdf}
-        \caption{The approximate optimal reparametrization and analytical solution.}\label{fig:curve_1_pl_solution}\end{subfigure}
+        \caption{The approximate optimal reparametrization of continuous problem.}\label{fig:curve_1_pl_solution}\end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/curve_1_pl/exp_2/history_plot_0.pdf}
@@ -45,9 +45,9 @@ In this experiment, we test if it is possible to reparametrize curves with piece
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/curve_1_pl/exp_2/layer_error.pdf}
-        \caption{Final cost \(E\) with the number of layers.}\label{fig:curve_1_pl_layer_error}
+        \caption{Final cost \(E\) with the number of hidden layers.}\label{fig:curve_1_pl_layer_error}
     \end{subfigure}
     \caption{Result of ensemble training for the piecewise linear version of test problem with different number of neurons and hidden layers. In Figure \ref{fig:curve_1_pl_neuron_error} the number of layers was fixed at 2. In Figure \ref{fig:curve_1_pl_layer_error} the number of neurons is fixed at 8 per hidden layer. The error bars denote a 80\% confidence interval found by bootstrapping.}\label{fig:curve_1_pl_eks}
 \end{figure}
 
-Since neural reparametrization solved the continuous problem, we also performed ensemble training. The result is shown in Figure \ref{fig:curve_2_layer_error}, where we observe that residual networks outperform fully connected feedforward networks on many layers. 
+Since neural reparametrization solved the continuous problem, we also performed ensemble training. The result is shown in Figure \ref{fig:curve_2_layer_error}. We observe that residual networks outperform fully connected feedforward networks on many layers yet again.

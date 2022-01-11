@@ -1,43 +1,41 @@
-\usepackage[utf8]{inputenc} %- Løser problem med å skrive andre enn engelske bokstaver f.eks æ,ø,å.
-\usepackage[T1]{fontenc} %- Støtter koding av forskjellige fonter.
-\usepackage{textcomp} % Støtter bruk av forskjellige fonter som dollartegn, copyright, en kvart, en halv mm, se http://gcp.fcaglp.unlp.edu.ar/_media/integrantes:psantamaria:latex:textcomp.pdf
-\usepackage{csquotes}
-\usepackage{url} % Gjør internett- og e-mail adresser klikkbare i tex-dokumentet.
-\usepackage[colorlinks,linktocpage]{hyperref} % Gjør referansene i tex-dokumentet klikkbare, slik at du kommer til referansen i referanselista.
-\usepackage[norsk,english]{babel} % Ordbok. Hvis man setter norsk i options til usepackage babel kan man bruke norske ord.
+% Styling: 
+\usepackage[T1]{fontenc} % Fonts 
+\usepackage[norsk,english]{babel} % Translates internal words to other languages when necessary
 
-\usepackage{amsmath} 				% Ekstra matematikkfunksjoner.
-\usepackage{amssymb}
-\usepackage{amsfonts}
-\usepackage{amsthm}
-\usepackage{mathrsfs}
-\usepackage{mathtools}
+% Math stuff:
+\usepackage{amsmath} % Essential math package
+\usepackage{amssymb} % Math symbols
+\usepackage{amsfonts} % Math fonts
+\usepackage{mathtools} % Provides a series of packages designed to enhance the appearance of documents containing mathematics
 
-\usepackage{bm}
-\usepackage{physics}
-\usepackage{siunitx}				% Må inkluderes for blant annet å få tilgang til kommandoen \SI (korrekte måltall med enheter)
-\sisetup{exponent-product = \cdot}      	% Prikk som multiplikasjonstegn (i steden for kryss).
-% \sisetup{output-decimal-marker  =  {,}} 	% Komma som desimalskilletegn (i steden for punktum).
-\sisetup{separate-uncertainty = true}   	% Pluss-minus-form på usikkerhet (i steden for parentes). 
+% Clickable objects
+\usepackage{url} % url command
+\usepackage[colorlinks,linktocpage]{hyperref} % Internal links
 
-\usepackage{geometry}
-\usepackage{tikz-cd}
-\usepackage{graphicx}
-\usepackage{changepage}
-\usepackage{subcaption}
-\usepackage{placeins}
-\usepackage{booktabs} % For å få tilgang til finere linjer (til bruk i tabeller og slikt).
-\usepackage[font=small,labelfont=bf]{caption}		% For justering av figurtekst og tabelltekst.
+% Math tools:
+\usepackage{physics} % useful commands for equations
+\usepackage{amsthm} % Theorem styling 
+% \usepackage{mathrsfs}
+\usepackage{tikz-cd} % Commutative diagrams
 
-\usepackage[backend=biber, bibencoding=utf8]{biblatex}
+% Figures:  
+\usepackage{graphicx} % More options for \includegraphics
+\usepackage{subcaption} % Subfigures 
+\usepackage{placeins} % Defines a \FloatBarrier command 
+\usepackage{booktabs} % The package enhances the quality of tables in LaTeX, providing extra commands as well as behind-the-scenes optimisation.  
+\usepackage[font=small]{caption} % Adjust figure captions
+
+% References
+\usepackage[backend=biber]{biblatex}
+\usepackage{csquotes} % This package provides advanced facilities for inline and display quotations. 
+\usepackage{authblk} % Defines the  \affil command
+
 
 \usepackage{todonotes}
 
-% my personal commands
-\newcommand{\R}{\mathbb{R}}
-\newcommand{\restr}[2]{\ensuremath{\left.#1\right|_{#2}}}
 
-% math notatoin
+
+% math notation
 \newtheorem{definition}{Definition}[section]
 \newtheorem{theorem}{Theorem}[section]
 \newtheorem{claim}[theorem]{Claim}
@@ -48,3 +46,8 @@
 \newtheorem*{observation}{Observation}
 \newtheorem*{example}{Example}
 \newtheorem*{remark}{Remark}
+
+% my personal commands
+\newcommand{\R}{\mathbb{R}}
+\newcommand{\restr}[2]{\ensuremath{\left.#1\right|_{#2}}}
+\newcommand{\id}{\text{id}}

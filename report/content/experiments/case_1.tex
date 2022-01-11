@@ -1,6 +1,6 @@
 In this experiment we used the example from \cite[Section 4.2.6]{jørgen2021}. The SRVT was not used in the original experiment, but the resulting optimization problem is the same. Thus, we considered a curve with SRV form \(q\) given by 
 \begin{equation*}
-    r(t) = \pi [-2 \sin(2\pi t), 4\cos(4\pi t)]
+    r(t) = \pi [-2 \sin(2\pi t), 4\cos(4\pi t)],
 \end{equation*}
 and its reparametrization \(q = \sqrt{\psi'}q \circ \psi\), where 
 \begin{equation*}
@@ -19,7 +19,7 @@ The SRV form of the curves is shown in Figure \ref{fig:curve_1}.
     %     \includegraphics[width=\linewidth]{figures/curve_1/curve_c_2.pdf}
     %     \caption{\(c_2\)}
     % \end{subfigure}
-    \begin{subfigure}[b]{0.5\textwidth}
+    \begin{subfigure}[t]{0.5\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/curve_1/curve_q.pdf}
         \caption{\(q\)}\label{fig:curve_1_q}
@@ -41,7 +41,7 @@ The SRV form of the curves is shown in Figure \ref{fig:curve_1}.
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
         \includegraphics[width=\linewidth]{figures/curve_1/eks_5/layer_error.pdf}
-        \caption{Final cost \(E\) with the number of layers.} \label{fig:curve_1_layer_error}
+        \caption{Final cost \(E\) with the number of hidden layers.} \label{fig:curve_1_layer_error}
     \end{subfigure}
     \caption{Result of ensemble training with different number of neurons and hidden layers. In Figure \ref{fig:curve_1_neuron_error} the number of layers was fixed at 2. In Figure \ref{fig:curve_1_layer_error} the number of neurons is fixed at 8 per hidden layer. The error bars denote a 80\% confidence interval found by bootstrapping.} \label{fig:curve_1_parmas_eks}
 \end{figure}
@@ -76,5 +76,5 @@ Reparametrization by neural networks was also compared to deep reparametrization
         0.000002     & 10000              & Palais Layers \\
         \bottomrule
     \end{tabular}
-    \caption{Comparison of the performance of reparametrization by residual neural network and deep reparametrization. Each experiment is the average of 10 optimisation procedures. Deep reparametrization was performed using Palais Layers} \label{tab:comare_res_palais}
+    \caption{Comparison of the performance of reparametrization by residual neural network and deep reparametrization. Each experiment is the average of 10 optimisation procedures. Deep reparametrization was performed using Palais Layers.}\label{tab:comare_res_palais}
 \end{table}
