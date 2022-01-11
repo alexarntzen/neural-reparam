@@ -1,5 +1,5 @@
 """
-Cost functions associated with the SRV form. || q - \sqrt(\ksi_dx)r \circ \ksi||_{L^2}
+Cost functions associated with the SRV form. || q - sqrt(ksi_dx)r circ ksi||_{L^2}
 """
 import torch
 import torch.nn as nn
@@ -7,6 +7,7 @@ import torch.autograd as autograd
 from torch.utils.data import DataLoader
 
 l2_loss = nn.MSELoss()
+
 
 def get_elastic_metric_loss(r: callable, constrain_cost, verbose=False):
     """assumes we want to compute the values of q_1 beforehand
@@ -59,6 +60,7 @@ def get_elastic_error_func(r: callable, true_dist=0):
         return 2 * l2_loss(q_eval, r_trans) - true_dist
 
     return get_elastic_error
+
 
 def compute_loss_reparam(loss_func, model: callable, x_train, y_train):
     loss = loss_func(model, x_train, y_train)
