@@ -1,8 +1,8 @@
 
-\section{Reparametrization with neural networks}
-This section introduces a method to find the optimal reparametrization using neural networks. It was inspired by \citeauthor{jørgen2021}'s deep reparametrization method \cite{jørgen2021}. In deep reparametrization, solutions are constructed much like a residual neural network. Consequently, modeling reparametrizations as neural networks is a natural choice.
+\section{Reparametrization with neural networks}\label{sec:nueral-reparam}
+This section introduces a method to find the optimal reparametrization using neural networks. It was inspired by \citeauthor{jørgen2021}'s deep reparametrization method \cite{jørgen2021}. In deep reparametrization, solutions are constructed much like a residual neural network. Consequently, modeling reparametrizations as neural networks is a natural choice. A similar approach has also been considered in \cite{berland2019}.
 
-\subsection{Feedforward Neural networks}
+\subsection{Feedforward neural networks}
 Neural networks have been used successfully in many different fields and come in many different forms. Furthermore, there are multiple ways of defining neural networks and many different universal approximation results. We define neural networks similarly to \cite{cybenko1989} by first defining the following nonlinearity property.
 \begin{definition}[Sigmoidal function]
   A sigmoidal function is a function \(\sigma : \R \rightarrow \R \) such that
@@ -11,57 +11,56 @@ Neural networks have been used successfully in many different fields and come in
   \end{equation*}
 \end{definition}
 We then define feedforward neural networks as follows.
-\begin{definition}[Feedforward Neural Networks]
+\begin{definition}[Feedforward Neural Networks]\label{def:FNN}
   For a sigmoidal function \(\sigma\), a \emph{feedforward neural network} is a function on the form
   \begin{equation*}
     f_\theta  = A_L \circ \sigma \circ A_{L-1} \circ \sigma \cdots  \sigma \circ A_1,
   \end{equation*}
-  where \(\sigma\) is applied componentwise and \(\theta = {(W_k, b_k)}_{k = 1}^L\) determines the affine functions \(A_k: \R^{l_{k-1}} \rightarrow \R^{l_k} : x \mapsto W_k x + b_k \). \todo{parameter space \(\Theta\)}
+  where \(\sigma\) is applied componentwise and \(\theta = {(W_k, b_k)}_{k = 1}^L\) determines the affine functions \(A_k: \R^{l_{k-1}} \rightarrow \R^{l_k} : x \mapsto W_k x + b_k \). 
 \end{definition}
 \begin{remark}
-  There are several naming conventions on the parameters of neural networks. The parameter \(L\) denotes the number of layers or \emph{depth}, and \(L-1\) is the number of \emph{hidden} layers. Also for each layer, \(l_k\) is called the \emph{width} of the layer. Neural networks with one hidden layer are called \emph{shallow}. Similarly, networks with more hidden layers \(L > 2\) are called \emph{deep}.
+  There are several naming conventions on the parameters of neural networks. The parameter \(L\) denotes the number of layers or \emph{depth}, and \(L-1\) is the number of \emph{hidden} layers. Also for each layer, \(l_k\) is called the \emph{width} of the layer. The width of the layer is also called the neurons of \emph{neurons} in the layer. Neural networks with one hidden layer are called \emph{shallow}. Similarly, networks with more hidden layers \(L > 2\) are called \emph{deep}.
 \end{remark}
 
-An important property of neural networks is that they are universal approximators. More concretely, a classical result \cite[Theorem 2]{cybenko1989} states that the space of all shallow feedforward neural networks with a continuous sigmoidal are dense in \(C(I_n)\), where \(C(I_n)\) is the banach space of continuous functions from the unit cube in \(\R^n\) with the infinity norm.  Furthermore, for a specific sigmoidal function, it is possible to prove an estimate of how the necessary width and depth of feedforward networks grows with increasing approximation error. Specifically, with the \(\tanh\) sigmoidal function \citeauthor{ryck2021} \cite[Theorem 5.1]{ryck2021} show that for all \(\epsilon > 0 \) and \(f \in C^k(I_n)\). There exist a network \(\hat{f_\epsilon}\) with width \(\mathcal{O}(\epsilon^{n / k})\) such that
+An important property of neural networks is that they are universal approximators. More concretely, a classical result \cite[Theorem 2]{cybenko1989} states that the space of all shallow feedforward neural networks with a continuous sigmoidal are dense in \(C(I_n)\), where \(C(I_n)\) is the Banach space of continuous functions from the unit cube in \(\R^n\) with the infinity norm.  Furthermore, for a specific sigmoidal function, it is possible to prove an estimate of how the necessary width and depth of feedforward networks grows with increasing approximation error. Specifically, with the \(\tanh\) sigmoidal function a consequence of \cite[Theorem 5.1]{ryck2021} is that for all \(\epsilon > 0 \) and \(f \in C^k(I_n)\). There exist a network \(\hat{f_\epsilon}\) with width \(\mathcal{O}(\epsilon^{- n / (k-s)})\) such that
 \begin{equation*}
-  \norm{f - \hat{f_\epsilon}}_\infty < \epsilon.
-\end{equation*}
-For networks with ReLu sigmoidal functions, similar estimates have been proven by \citeauthor{yarotsky2017} \cite{yarotsky2017}. Thus, we conclude that it is possible to approximate diffeomorphisms of \(I\)  with neural networks.
+  \norm{f - \hat{f_\epsilon}}_{C^s(I_n)} < \epsilon, 
+\end{equation*} 
+where \(\norm{.}_{C^s(I_n)}\) is the usual \(C^k\). For networks with ReLu sigmoidal functions, similar estimates have been proven by \citeauthor{yarotsky2017} \cite{yarotsky2017}.  These results indicate that it is possible to approximate the diffeomorphisms on \(I\) with neural networks.
 
-\todo{comment on automatic differentiation}
 
 \subsection{Neural networks as reparametrizations}\label{subsec:neural-nets}
-Reparametrization using neural networks is based on four ideas. Firstly, neural networks approximate any reparametrization in \(\DiffI\) arbitrarily well. Secondly, using a quadrature rule as in \eqref{eq:discretized_cost}, we end up with a cost function \(\hat E(\theta)\) which consistently approximates the true error \(E(f_\theta)\). The optimal reparametrization can then be found by optimizing \(\hat E\) with a gradient-based algorithm like BFGS\@. Finally, we need to ensure that the final solution belongs to \(\DiffI\).
+Reparametrization using neural networks is based on four ideas. Firstly, by theorem \cite[Theorem 5.1]{ryck2021} neural networks approximate any reparametrization in \(\DiffI\) arbitrarily well in the \(C^s(I)\) norm.  Secondly, since all our functions are assumed to be smooth, using a quadrature rule as in \eqref{eq:discretized_cost}, we end up with a cost function \(\hat E(\theta)\) which consistently approximates the true error \(E(f_\theta)\). The optimal reparametrization is then found by optimizing the quadrature approximation \(\hat E\) with a gradient-based algorithm like BFGS. Finally, we need to ensure that the final solution belongs to \(\DiffI\).
 
-A solution \(f_\theta : \R \rightarrow \R \) must fulfill three constrains to be a in \(\DiffI \). The first one, smoothness, is achieved by selecting a smooth sigmoidal function. The boundary conditions and positiveness of \(f_\theta'\) are then enforced by adding penalizing terms to the cost function. The new cost function will therefore need to minimize the following therms
-\begin{align*}
-  \mathcal{K}_{\text{int},\theta}(t)  & = q_1(t) - \sqrt{\dot f_\theta(t)}q_2 \circ f_\theta(t), \\
-  \mathcal{K}_{\text{Diff},\theta}(t) & = \one_{(-\infty,0]}\dot f_{\theta}(t),                  \\
-  \mathcal{K}_{b,\theta}              & = \abs{f_\theta(0)}^2 + \abs{f_\theta(1) - 1}^2.
-\end{align*}
-There is no obvious relation between the sizes of the three penalties. Therefore, the new cost function will be their weighted sum
+A solution \(f_\theta : \R \rightarrow \R \) must fulfill three constrains to be a in \(\DiffI \). The first one, smoothness, is achieved by selecting a smooth sigmoidal function. The boundary conditions and positiveness of \(f_\theta'\) are then enforced by adding penalizing terms to our cost function. Thus we define a new cost function 
 \begin{equation}\label{eq:neural_cost}
   \mathcal{J}(\theta) =
   \frac{1}{N}\sum_{i=n}^{N_i}{
   \big(
-  w_\text{int}\abs{\mathcal{K}_{\text{int},\theta}(t_i)}^2 +
-  w_{\text{Diff}}|{\mathcal{K}}_{\text{Diff}, \theta}(t_i)|^2
+  w_\text{int}{\mathcal{K}_{\text{int},\theta}(t_i)} +
+  w_{\text{Diff}}{\mathcal{K}}_{\text{Diff}, \theta}(t_i)
   \big)} +
   w_{b}{\mathcal{K}}_{b,\theta} +
   \lambda||\theta||_2,
 \end{equation}
-where  \(w_\text{int}, w_{b} \) and  \(w_{\text{Diff}}\) are parameters penalizing each residual. Furthermore, \(\lambda\) is a regularization parameter where \(\theta\) is treated as vector.
+where we have defined residuals
+\begin{align*}
+  \mathcal{K}_{\text{int},\theta}(t)  & = \abs{q_1(t) - \sqrt{f_\theta'(t)}q_2 \circ f_\theta(t)}^2, \\
+  \mathcal{K}_{\text{Diff},\theta}(t) & = \abs{\one_{(-\infty,0]} \circ  f_{\theta}'(t)}^2,                  \\
+  \mathcal{K}_{b,\theta}              & = \abs{f_\theta(0)}^2 + \abs{f_\theta(1) - 1}^2.
+\end{align*}
+Here \(\mathcal{K}_{\text{Diff}}\) guarantees inevitability, and \(\mathcal{K}_{b}\) enforces boundary conditions. There is no obvious relation between the sizes of the three penalties. Therefore, the cost function \(\mathcal{J}\) is the weighed sum of the residuals,  with weights \(w_\text{int}, w_{b} \) and  \(w_{\text{Diff}}\).  Furthermore, \(\lambda\) is a regularization parameter where \(\theta\) is treated as vector. 
 
 \subsection{Discontinuous SRV form}\label{subsec:discont_curves}
-Optimizing the new cost function \(\mathcal{J}\) will not necessarily work for curves that have a discontinuous SRV form \(q_1, q_2\). If one of the transformed curves is discontinuous, there is no guarantee that the cost function will be continuous. The discontinuous optimization problem will be harder to solve and can not be solved with a typical gradient-based method.
+Although the curves we have been considering so far are assumed to be smooth, it would not be unusual to deal with discontinuous curves with discontinuous SRV form \(R(c_1), R(c_2)\) in practical situations. Optimizing the new cost function \(\mathcal{J}\) will not necessarily work in this setting. If one of the transformed curves is discontinuous, there is no guarantee that the cost function will be continuous. The discontinuous optimization problem will be harder to solve and can not be solved with a typical gradient-based method.
 
-A general theory of when discontinuous curves results in a discontinuous cost function will not be attempted. Instead we look at a situation when the the cost function is guaranteed to be discontinuous at a point \(\theta_0\). Consider a transformed curve  \(r\) that is discontinuous at  \(a \in I\). Moreover, assume that the reparametrizations  \(f_{\theta}\) is smooth with respect to the parameters  \(\theta\), \(f_{\theta_0}(t')=a\) and  \(\pdv{f}{\theta_1}|_{\theta_0}(t')\neq 0\) for some  \(\theta_0\) and direction \(\theta_1\). Then along the direction  \(\theta_1\),  \(f_{\theta}\) will have a a continuous inverse in some neighborhood  \(N\) of  \(\theta_0\). Thus, since \(\sqrt{f_{\theta}'(t')} \geq 0\), \(r \circ f_\theta(t')\) and  \(\sqrt{f_{\theta}'(t')} r \circ f_\theta(t')\) will be discontinuous at \(\theta_0\). If we then assume that
+A general theory of when discontinuous curves results in a discontinuous cost function will not be attempted. Instead we look at a situation when the the cost function is guaranteed to be discontinuous at a point \(\theta_0\). Consider a transformed curve  \(r\) that is discontinuous at  \(a \in I\). Moreover, assume that the reparametrizations  \(f_{\theta}\) is smooth with respect to the parameters  \(\theta\), \(f_{\theta_0}(t')=a\) and  \(\pdv{f}{\theta_1}|_{\theta_0}(t')\neq 0\) for some  \(\theta_0\) and direction \(\theta_1\). Then along the direction  \(\theta_1\),  \(f_{\theta}\) will have a a continuous inverse in some neighborhood  \(U\) of  \(\theta_0\). Thus, since \(\sqrt{f_{\theta}'(t')} \geq 0\), \(r \circ f_\theta(t')\) and  \(\sqrt{f_{\theta}'(t')} r \circ f_\theta(t')\) will be discontinuous at \(\theta_0\). If we then assume that
 \begin{equation*}
-  \sqrt{f_{\theta}'(t')} r \circ f_\theta(t') \geq  q(t')\ \text{on} \ N,
+  \sqrt{f_{\theta}'(t')} r \circ f_\theta(t') \geq  q(t')\ \text{on} \ U,
 \end{equation*}
 or
 \begin{equation*}
-  \sqrt{f_{\theta}'(t')} r \circ f_\theta(t') \leq q(t') \ \text{on} \ N.
+  \sqrt{f_{\theta}'(t')} r \circ f_\theta(t') \leq q(t') \ \text{on} \ U.
 \end{equation*}
 Then the cost function defined as
 \begin{equation*}
@@ -106,7 +105,6 @@ For transformed curves that are not continuous, there is a way to find an approx
   \end{align*}
 \end{proof}
 
-As a consequence, if we have two smooth curves with piecewise constant interplants \(r, q\) that results in the cost function \(E\) defined as in \eqref{eq:discretized_cost}. If we also construct a continuous and piecewise linear function \(\hat r\) interpolating \(r\) at \(\{t_i\}, 1 \leq i <n\). Then, replacing \(r\) by \(\hat r\) results in cost function  \(\hat{E}\) such that \(|\hat{E} - E |= \mathcal{O}(1/n)\).
+As a consequence, if we have two smooth curves with piecewise constant interpolations \(r, q\) that results in the cost function \(E\) defined as in \eqref{eq:discretized_cost}. If we also construct a continuous and piecewise linear function \(\hat r\) interpolating \(r\) at \(\{t_i\}, 1 \leq i <n\). Then, replacing \(r\) by \(\hat r\) results in cost function  \(\hat{E}\) such that \(|\hat{E} - E |= \mathcal{O}(1/n)\).
 
-
-As seen in chapter \ref{subsec:shape-lie} motion capture data can be viewed as a smooth curve in \({SO(3)}^m\). If this motion is record at at discrete times, then the resulting geodesic interpolation results in a SRVT that is piecewise constant. Thus for two motions, we have two smooth curves with piecewise constant interpolations \(q_1, q_2\) in SRV form. The optimal parametrization problem results in the cost discontinuous function\(E\). If we then construct a continuous piecewise linear function \(\hat r\) interpolating \(r\) at \(\{t_i\}, 1 \leq i <n\). Then replacing \(r\) by \(\hat r\) results in cost function  \(\hat{E}\) such that \(|\hat{E} - E |= \mathcal{O}(1/n)\).
+As seen in Section \ref{subsec:shape-lie} motion capture data can be viewed as a smooth curve in \({SO(3)}^m\). If this motion is record at at discrete times, then the resulting geodesic interpolation results in a SRVT that is piecewise constant. Thus for two motions, we have two smooth curves with piecewise constant interpolations \(q_1, q_2\) in SRV form. The optimal parametrization problem results in the discontinuous cost function \(E\). To regularize the cost function \(E\), we replace \(r\) by its linear interpolation \(\hat r\), interpolating \(r\) at \(\{t_i\}, 1 \leq i <n\). Then, replacing \(r\) by \(\hat r\) results in cost function  \(\hat{E}\) such that \(|\hat{E} - E |= \mathcal{O}(1/n)\). 

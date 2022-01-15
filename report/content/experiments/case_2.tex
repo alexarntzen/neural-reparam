@@ -1,4 +1,4 @@
-In this experiment we considered two different curves \(q\) and \(r\) with SRVT forms
+In this experiment we considered two different curves \(q\) and \(r\) with SRV forms
 \begin{equation*}
     q(t) = [\cos(t), \sin(t)], \quad  r(t) = [0,1]. 
 \end{equation*}
@@ -10,12 +10,12 @@ The corresponding optimal reparametrization problem has an analytical solution c
 \begin{figure}[b]
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{figures/curve_2/exp_3/plot_0_0.pdf}
+        \includegraphics[width=\linewidth]{figures/curve_2/exp_6/plot_0_0.pdf}
         \caption{The approximate optimal reparametrization}\label{fig:curve_2_solution}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{figures/curve_2/exp_3/history_plot_0.pdf}
+        \includegraphics[width=\linewidth]{figures/curve_2/exp_6/history_plot_0.pdf}
         \caption{The cost function \(\mathcal{J}(\theta)\) with each iteration.}\label{fig:curve_2_history}
     \end{subfigure}
     \caption{One approximate solution to the test problem from subsection \ref{subsec:case_2}, found by a neural network and compared with the analytical solution. The corresponding training history is shown in Figure \ref{fig:curve_2_history} }\label{fig:curve_2_example}
@@ -24,12 +24,12 @@ The corresponding optimal reparametrization problem has an analytical solution c
 \begin{figure}[b]
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{figures/curve_2/exp_3/neurons_error.pdf}
+        \includegraphics[width=\linewidth]{figures/curve_2/exp_6/neurons_error.pdf}
         \caption{The final cost difference \(\Delta E\) with the number of neurons in each hidden layer.} \label{fig:curve_2_neuron_error}
     \end{subfigure}
     \begin{subfigure}[t]{0.5\textwidth}
         \centering
-        \includegraphics[width=\linewidth]{figures/curve_2/exp_3/layer_error.pdf}
+        \includegraphics[width=\linewidth]{figures/curve_2/exp_6/layer_error.pdf}
         \caption{Final cost  difference \(\Delta E\) with the number of hidden layers.} \label{fig:curve_2_layer_error}
     \end{subfigure}
     \caption{Result of ensemble training with different number of neurons and hidden layers. The difference between the computed and analytical cost function \(E\) is shown. In Figure \ref{fig:curve_2_neuron_error} the number of layers was fixed at 2. In Figure \ref{fig:curve_2_layer_error} the number of neurons is fixed at 8 per hidden layer. The error bars denote a 80\% confidence interval found by bootstrapping.} \label{fig:curve_2_parmas_eks}

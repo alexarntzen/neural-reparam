@@ -10,7 +10,7 @@ activations = {
 }
 
 
-class ResNET(nn.Module):
+class ResNet(nn.Module):
     def __init__(
         self,
         input_dimension,
@@ -20,7 +20,7 @@ class ResNET(nn.Module):
         activation="relu",
         **kwargs
     ):
-        super(ResNET, self).__init__()
+        super(ResNet, self).__init__()
 
         # Number of input dimensions n
         self.input_dimension = input_dimension
@@ -37,7 +37,7 @@ class ResNET(nn.Module):
 
         self.input_layer = nn.Linear(self.input_dimension, self.neurons)
         self.hidden_layers = nn.ModuleList(
-            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers)]
+            [nn.Linear(self.neurons, self.neurons) for _ in range(n_hidden_layers - 1)]
         )
         self.output_layer = nn.Linear(self.neurons, self.output_dimension)
 
@@ -51,7 +51,7 @@ class ResNET(nn.Module):
         return self.output_layer(x)
 
     def __str__(self):
-        return "ResNET"
+        return "ResNet"
 
 
 def init_zero(model, **kwargs):
