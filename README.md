@@ -10,4 +10,4 @@ The experiments can be found in the `/experiments` folder.
 
 To run the first experiments, install the packages in `requirements.txt`. 
 
-To run the final notebook, install the python code in `https://github.com/paalel/master.git` and set up the motion capture database.
+To run the final notebook, install the python code in [github.com/paalel/master](https://github.com/paalel/master.git) and set up the motion capture database.
