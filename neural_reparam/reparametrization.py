@@ -4,7 +4,6 @@ Cost functions associated with the SRV form. || q - sqrt(ksi_dx)r circ ksi||_{L^
 import torch
 import torch.nn as nn
 import torch.autograd as autograd
-from torch.utils.data import DataLoader
 
 l2_loss = nn.MSELoss()
 
@@ -43,25 +42,25 @@ def get_elastic_metric_loss(r: callable, constrain_cost, verbose=False):
     return elastic_metric_loss
 
 
-# new function used for logging. Takes in data = (x_eval, q_eval)
-def get_elastic_error_func(r: callable, true_dist=0):
-    def get_elastic_error(model, data):
-        x_data, q_eval = next(
-            iter(DataLoader(data, batch_size=len(data), shuffle=False))
-        )
-        ksi_eval = model(x_data)
-
-        # each ksi_i is only dependent on x_i
-        # need to sum the final ksi_prd because of batching
-        ksi_dx = autograd.grad(ksi_eval.sum(), x_data)[0]
-
-        # would not need abs here but sometimes it goes negative
-        r_trans = torch.sqrt(torch.abs(ksi_dx)) * r(ksi_eval)
-        return 2 * l2_loss(q_eval, r_trans) - true_dist
-
-    return get_elastic_error
-
-
 def compute_loss_reparam(loss_func, model: callable, x_train, y_train):
     loss = loss_func(model, x_train, y_train)
     return loss
+
+
+def batch_reinforcement_learning(Q: callable, r: callable, states, next):
+    """On policy Q learning with discretized action and time
+    Q(s): (X x T) --> [0, inf )^#A
+    """
+    # choose actions and compute next
+    Q_est = Q(states)
+    actions = torch.amax(Q_est).no_grad()
+    states_next = next(states, actions)
+
+    r_est = r(states, actions)
+
+    # calculate max
+    Q_est_next = Q(states_next).no_grad() * torch.unsqueeze(states == 1, dim=-1)
+
+    # calculate goal
+    Y_est = r_est + Q_est_next
+    return l2_loss(Y_est - Q_est)
