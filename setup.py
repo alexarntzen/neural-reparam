@@ -1,12 +1,12 @@
 from setuptools import setup
 
 setup(
-    name="fordypningsoppgave",
+    name="neural-reparam",
     version="0.1",
-    packages=["experiments", ""],
+    packages=["neural_reparam"],
     url="",
     license="",
     author="Alexander Johan Arntzen",
     author_email="alexander@alexarntzen.com",
-    description="",
+    description="For master thesis project",
 )
