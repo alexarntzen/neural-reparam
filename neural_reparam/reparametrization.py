@@ -8,13 +8,13 @@ import torch.autograd as autograd
 l2_loss = nn.MSELoss()
 
 
-def get_elastic_metric_loss(r: callable, constrain_cost, verbose=False):
+def get_elastic_metric_loss(r: callable, constrain_cost=0, verbose=False):
     """assumes we want to compute the values of q_1 beforehand
     q is the original curve"""
     ReLU = nn.ReLU()
 
-    zero = torch.tensor([0.0])
-    one = torch.tensor([1.0])
+    zero = torch.zeros((1, 1), dtype=torch.long)
+    one = torch.ones((1, 1), dtype=torch.long)
 
     def elastic_metric_loss(ksi_model: callable, x_train, y_train):
         q_eval = y_train

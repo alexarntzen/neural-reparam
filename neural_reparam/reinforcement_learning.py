@@ -1,15 +1,256 @@
 import numpy as np
+from scipy.interpolate import interp1d
+from scipy.integrate import simpson, trapezoid
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import matplotlib.pyplot as plt
 from torch.utils.data import dataset
 
 from deepthermal.FFNN_model import compute_loss_torch, larning_rates
 
-penalty = 1e0
-penalty_ = torch.LongTensor([penalty])
-zero_ = torch.zeros(1)
+# penalty = 1er
+# penalty_ = torch.tensor(penalty)
+zero_ = torch.tensor(0.0)
 l2_loss = nn.MSELoss()
+
+
+@torch.no_grad()
+def r_cost(
+    state_index: torch.LongTensor, next_state_index: torch.LongTensor, data: dataset
+) -> torch.Tensor:
+    assert torch.all(next_state_index >= state_index), "wrong direction"
+    if state_index[0] == next_state_index[0]:
+        return zero_
+    # elif torch.any(state_index == next_state_index):
+    #     return penalty_
+
+    t_data, q_data, r_data = data[:]
+    q_eval = q_data[state_index[0] : next_state_index[0] + 1]
+    r_eval = r_data[state_index[1] : next_state_index[1] + 1]
+
+    index_diff = next_state_index - state_index
+    if state_index[1] == next_state_index[1]:
+        # if x does not change compute
+        tx_indices = torch.arange(0, index_diff[0] + 1)
+        integrand = torch.sum(q_eval ** 2, dim=-1)
+
+    else:
+        gcd = torch.gcd(index_diff[..., 0], index_diff[..., 1])
+
+        # find the lowest iteger to represent the points on the interval using ints
+        product_index = torch.div(
+            torch.prod(index_diff, dtype=torch.long), gcd, rounding_mode="floor"
+        )
+        # one extra since we want the end state included
+        common_length = product_index + 1
+
+        # compute common indexes
+        t_spacing = torch.div(index_diff[1], gcd, rounding_mode="floor").item()
+        x_spacing = torch.div(index_diff[0], gcd, rounding_mode="floor").item()
+        t_indices = torch.arange(0, common_length, t_spacing, dtype=torch.long)
+        x_indices = torch.arange(0, common_length, x_spacing, dtype=torch.long)
+        tx_indices = torch.LongTensor(np.union1d(t_indices, x_indices))
+
+        # compute integrand with interpolated values
+        r_int = torch.from_numpy(
+            interp1d(x_indices, r_eval, axis=0, kind="linear", assume_sorted=True)(
+                tx_indices
+            )
+        )
+        q_int = torch.from_numpy(
+            interp1d(t_indices, q_eval, axis=0, kind="linear", assume_sorted=True)(
+                tx_indices
+            )
+        )
+        ksi_diff = index_diff[1] / index_diff[0]
+        integrand = torch.sum((q_int - torch.sqrt(ksi_diff) * r_int) ** 2, dim=-1)
+
+    start_t = get_state(state_index=state_index, data=data)[0]
+    end_t = get_state(state_index=next_state_index, data=data)[0]
+
+    # compute integral
+    r_int = trapezoid(integrand, tx_indices) * (end_t - start_t) / tx_indices[-1]
+    return r_int
+
+
+def r_cost_old(
+    state_index: torch.LongTensor, next_state_index: torch.LongTensor, data: dataset
+) -> torch.Tensor:
+    assert torch.all(next_state_index >= state_index), "wrong direction"
+    if torch.all(state_index == next_state_index):
+        return zero_
+    # elif torch.any(state_index == next_state_index):
+    #     return penalty_
+
+    t_data, q_data, r_data = data[:]
+
+    index_diff = next_state_index - state_index
+    gcd = torch.gcd(index_diff[..., 0], index_diff[..., 1])
+
+    # one extra since we want the end state included
+    index_length = (
+        torch.div(torch.prod(index_diff).long(), gcd, rounding_mode="floor") + 1
+    )
+
+    # make indexes that repeats itself x_scale times
+    # t
+    indexes_t = torch.linspace(state_index[0], next_state_index[0], index_length).long()
+    # x
+    indexes_x = torch.linspace(state_index[1], next_state_index[1], index_length).long()
+
+    # corresponding t values
+    start_t = get_state(state_index=state_index, data=data)[0].detach()
+    end_t = get_state(state_index=next_state_index, data=data)[0].detach()
+
+    t_eval = torch.linspace(
+        start_t,
+        end_t,
+        steps=index_length,
+    )
+    q_eval = q_data[indexes_t]
+    r_eval = r_data[indexes_x]
+
+    ksi_diff = index_diff[1] / index_diff[0]
+    integrand = torch.sum((q_eval - torch.sqrt(ksi_diff) * r_eval) ** 2, dim=-1)
+    r_int = torch.trapezoid(integrand, t_eval)
+
+    return r_int
+
+
+def get_epsilon_greedy(epsilon: float, num_actions: int) -> callable:
+    def epsilon_greedy(
+        state_index: torch.LongTensor, model: callable, data: dataset
+    ) -> torch.LongTensor:
+        if torch.rand(1) < epsilon:
+            return torch.randint(low=0, high=num_actions, size=(1,)).long()
+        else:
+            return get_optimal_action(q_model=model, state_index=state_index, data=data)
+
+    return epsilon_greedy
+
+
+def get_state(state_index: torch.LongTensor, data: dataset):
+    t_data = data[:][0]
+    return t_data[state_index]
+
+
+def is_end_state(state_index: torch.LongTensor, data: dataset):
+    t_data = data[:][0]
+    grid_max = t_data.size(0)
+    if torch.all(state_index == grid_max - 1):
+        return True
+
+
+def get_optimal_action(
+    q_model: callable, state_index: torch.LongTensor, data: dataset
+) -> torch.LongTensor:
+    state = get_state(state_index=state_index, data=data)
+    action_index = torch.argmin(q_model(state), dim=-1).unsqueeze(-1).long()
+    return action_index
+
+
+def get_action_map(depth, data):
+    # assumes same base
+    # hack to make a list of all admissible directions (in reverse)
+    grid_size = data[:][0].size(0)
+    assert depth <= grid_size, "action space larger than state space"
+    action_array = torch.LongTensor(
+        np.indices((depth, depth)).T.reshape(depth ** 2, 2) + 1
+    )
+
+    # could also have used np.unravel_index
+    def action_map(
+        action_index: torch.LongTensor, state_index: torch.LongTensor
+    ) -> torch.LongTensor:
+        """state is index (i, j), action is (i)"""
+
+        # torch.LongTensor(np.divmod(action_index, base_dim)[-1])
+
+        # It is strange that actions act on state indices, but it should work
+        action = action_array[action_index[..., 0]]
+        new_state_index = torch.LongTensor(
+            np.minimum(state_index + action, grid_size - 1)
+        )
+
+        return new_state_index
+
+    return action_map
+
+
+def get_optimal_path(
+    q_model: callable,
+    action_map,
+    data=dataset,
+    start_state_index=torch.LongTensor([[0, 0]]),
+) -> torch.LongTensor:
+    # q_model: callable, state_index: torch.LongTensor, data: dataset
+    # no beautiful recursion here, python is stupid :(
+    state_index = start_state_index.detach().clone()
+    index_list = [state_index]
+    while not is_end_state(state_index, data):
+        action_index = get_optimal_action(
+            q_model=q_model, state_index=state_index, data=data
+        )
+
+        # update
+        state_index = action_map(action_index=action_index, state_index=state_index)
+
+        # store next
+        index_list.append(state_index)
+    return torch.vstack(index_list)
+
+
+def get_path_value(path: torch.LongTensor, data: dataset):
+    value = torch.zeros(1)
+    # print(path)
+    for i in range(len(path) - 1):
+        value += r_cost(state_index=path[i], next_state_index=path[i + 1], data=data)
+    return value
+
+
+def plot_solution(q_model, ksi, data, action_map):
+    with torch.no_grad():
+        x_eval, *_ = data[:]
+
+        N = len(data)
+        grid = x_eval[np.indices((N, N)).T]
+
+        cost_matrix = torch.min(q_model(grid).detach(), dim=-1)[0]
+        # print(grid, cost_matrix)
+        indexes = get_optimal_path(q_model=q_model, action_map=action_map, data=data)
+
+        fig, ax = plt.subplots(1)
+        plot = ax.imshow(cost_matrix, extent=[0, 1, 0, 1], origin="lower")
+        plt.colorbar(plot)
+
+        ax.scatter(x_eval[indexes[:, 0]], x_eval[indexes[:, 1]], label="DQN")
+        ksi_eval = ksi(x_eval.unsqueeze(1))
+        ax.plot(x_eval, ksi_eval, label="true")
+        plt.legend()
+
+        plt.show()
+
+    return ax
+
+
+def compute_loss_rl(model: callable, data: dataset, action_map):
+    path = get_optimal_path(q_model=model, action_map=action_map, data=data)
+    return get_path_value(path=path, data=data)
+
+
+class RLSystem:
+    def __init__(
+        self,
+        action_map: callable,
+        get_optimal_action: callable,
+        r_cost: callable,
+        is_end_state,
+        choose_action,
+        get_state: callable,
+        start_state,
+    ):
+        pass
 
 
 def fit_dqn_deterministic(
@@ -29,8 +270,7 @@ def fit_dqn_deterministic(
     verbose_interval=100,
     learning_rate=None,
     init_weight_seed: int = None,
-    loss_func=nn.MSELoss(),
-    compute_loss: callable = compute_loss_torch,
+    compute_loss: callable = compute_loss_rl,
     max_nan_steps=50,
     **kwargs
 ) -> tuple[callable, torch.Tensor, torch.Tensor]:
@@ -68,11 +308,11 @@ def fit_dqn_deterministic(
     else:
         raise ValueError("Optimizer not recognized")
 
-    loss_history_train = list()
-    loss_history_val = list()
+    loss_history_train = torch.zeros(num_epochs)
     nan_steps = 0
     # Loop over epochs
     for epoch in range(num_epochs):
+        # make indexes that repeats itself t_scale times
         if verbose and not epoch % verbose_interval:
             print(
                 "################################ ",
@@ -81,7 +321,10 @@ def fit_dqn_deterministic(
             )
 
         state_index = start_state_index
-
+        # start_state = get_state(state_index=state_index, data=data)
+        # print("pred_loss: ", torch.min(model(start_state)).item())
+        # path = get_optimal_path(model, action_map=action_map, data=data, start_state_index=start_state_index)
+        # print("policy_loss: ", get_path_value(path=path, data=data).item())
         while not is_end_state(state_index, data):
             action_index = choose_action(
                 state_index=state_index, model=model, data=data
@@ -90,6 +333,7 @@ def fit_dqn_deterministic(
             next_state_index = action_map(
                 action_index=action_index, state_index=state_index
             )
+
             # print("states: ", state_index, next_state_index)
 
             def closure():
@@ -114,25 +358,22 @@ def fit_dqn_deterministic(
                         next_state_index=next_state_index,
                         data=data,
                     )
+                    assert r_eval >= 0, "negative cost"
                     Q_est = Q_next_est + r_eval
 
-                # would not need abs here but sometimes it goes negative
-                # print("qopt, qest", Q_optim, Q_next_est, r_eval)
                 loss = l2_loss(Q_optim, Q_est)
                 loss.backward()
                 return loss
 
             optimizer_.step(closure=closure)
+
             state_index = next_state_index
-        track_history = False
         if track_history:
-            x_train, y_train = data[:]
             train_loss = compute_loss(
-                loss_func=loss_func,
-                model=model,
-                x_train=x_train,
-                y_train=y_train,
+                model=model, action_map=action_map, data=data
             ).detach()
+
+            loss_history_train[epoch] = train_loss
             if track_history:
                 # stop if nan output
                 if torch.isnan(train_loss):
@@ -141,136 +382,16 @@ def fit_dqn_deterministic(
                     nan_steps = 0
 
         if verbose and not epoch % verbose_interval and track_history:
-            print_iter = -1
-            print("Training Loss: ", np.round(loss_history_train[print_iter], 8))
-            if data_val is not None and len(data_val) > 0:
-                print("Validation Loss: ", np.round(loss_history_val[print_iter], 8))
+            print("Training Loss: ", np.round(loss_history_train[epoch], 8))
 
         if nan_steps > max_nan_steps:
             break
 
     if verbose and track_history and len(loss_history_train) > 0:
         print("Final training Loss: ", np.round(loss_history_train[-1], 8))
-        if data_val is not None and len(data_val) > 0:
-            print("Final validation Loss: ", np.round(loss_history_val[-1], 8))
 
-    return model, torch.as_tensor(loss_history_train), torch.as_tensor(loss_history_val)
-
-
-def r_cost(
-    state_index: torch.LongTensor, next_state_index: torch.LongTensor, data: dataset
-) -> torch.Tensor:
-    # TODO: double check this
-    # assumes eqally spaced points
-    assert torch.all(next_state_index >= state_index), "wrong direction"
-    if torch.all(state_index == next_state_index):
-        return zero_
-    elif torch.any(state_index == next_state_index):
-        return penalty_
-
-    t_data, q_data, r_data = data[:]
-    state_diff = get_state(state_index=next_state_index, data=data) - get_state(
-        state_index=state_index, data=data
+    return (
+        model,
+        torch.as_tensor(loss_history_train),
+        torch.as_tensor(loss_history_train),
     )
-    grid_size = t_data.size(0)
-    # one extra since we want the end state included
-    index_diff = 1 + next_state_index - state_index
-    gcd = torch.gcd(index_diff[0], index_diff[1])
-    len_longest_subseq = torch.div(
-        index_diff[0] * index_diff[1], gcd ** 2, rounding_mode="floor"
-    )
-
-    # make on same length
-    # t
-    if state_diff[0] < len_longest_subseq:
-        diff_indexes_t = torch.div(
-            torch.arange(len_longest_subseq) * index_diff[0],
-            len_longest_subseq,
-            rounding_mode="floor",
-        )
-    else:
-        diff_indexes_t = torch.arange(index_diff[0])
-    indexes_t = diff_indexes_t + state_index[0]
-
-    # x
-    if state_diff[1] < len_longest_subseq:
-        diff_indexes_x = torch.div(
-            torch.arange(len_longest_subseq) * index_diff[1],
-            len_longest_subseq,
-            rounding_mode="floor",
-        )
-    else:
-        diff_indexes_x = torch.arange(index_diff[1])
-    indexes_x = diff_indexes_x + state_index[1]
-
-    # make sure to only take integral inside the
-    assert torch.max(indexes_x) < grid_size, "index out of bounds"
-    assert torch.max(indexes_t) < grid_size, "index out of bounds"
-
-    q_eval = q_data[indexes_t]
-    r_eval = r_data[indexes_x]
-    ksi_diff = index_diff[1] / index_diff[0]
-
-    left = q_eval
-    right = torch.sqrt(ksi_diff) * r_eval
-    r_int = state_diff[0] ** 2 * l2_loss(left, right)
-    return r_int
-
-
-def get_epsilon_greedy(epsilon: float, num_actions: int) -> callable:
-    def epsilon_greedy(
-        state_index: torch.LongTensor, model: callable, data: dataset
-    ) -> torch.LongTensor:
-        if torch.rand(1) < epsilon:
-            return torch.LongTensor(torch.randint(low=0, high=num_actions, size=(1,)))
-        else:
-            return get_optimal_action(q_model=model, state_index=state_index, data=data)
-
-    return epsilon_greedy
-
-
-def get_state(state_index: torch.LongTensor, data: dataset):
-    t_data = data[:][0]
-    return t_data[state_index]
-
-
-def is_end_state(state_index: torch.LongTensor, data: dataset):
-    t_data = data[:][0]
-    grid_max = t_data.size(0)
-    if torch.all(state_index == grid_max - 1):
-        return True
-
-
-def get_optimal_action(
-    q_model: callable, state_index: torch.LongTensor, data: dataset
-) -> torch.LongTensor:
-    state = get_state(state_index=state_index, data=data)
-    action_index = torch.LongTensor(torch.argmin(q_model(state), dim=-1).unsqueeze(-1))
-    return action_index
-
-
-def get_action_map(depth, data):
-    # assumes same base
-    # hack to make a list of all admissible directions (in reverse)
-    grid_size = data[:][0].size(0)
-    assert depth ** 2 <= grid_size, "action space larger than state space"
-    action_array = torch.IntTensor(
-        np.indices((depth, depth)).T.reshape(depth ** 2, 2) + 1
-    )
-
-    def action_map(
-        action_index: torch.LongTensor, state_index: torch.LongTensor
-    ) -> torch.LongTensor:
-        """state is index (i, j), action is (i)"""
-
-        # torch.LongTensor(np.divmod(action_index, base_dim)[-1])
-
-        # It is strange that actions act on state indices, but it should work
-        action = action_array[action_index[..., 0]]
-        new_state_index = torch.LongTensor(
-            np.minimum(state_index + action, grid_size - 1)
-        )
-
-        return new_state_index
-
-    return action_map
