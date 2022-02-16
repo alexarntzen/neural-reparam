@@ -1,13 +1,13 @@
 import numpy as np
 from scipy.interpolate import interp1d
-from scipy.integrate import simpson, trapezoid
+from scipy.integrate import trapezoid
 import torch
 import torch.nn as nn
 import torch.optim as optim
 import matplotlib.pyplot as plt
 from torch.utils.data import dataset
 
-from deepthermal.FFNN_model import compute_loss_torch, larning_rates
+from deepthermal.FFNN_model import larning_rates
 
 # penalty = 1er
 # penalty_ = torch.tensor(penalty)
@@ -323,7 +323,10 @@ def fit_dqn_deterministic(
         state_index = start_state_index
         # start_state = get_state(state_index=state_index, data=data)
         # print("pred_loss: ", torch.min(model(start_state)).item())
-        # path = get_optimal_path(model, action_map=action_map, data=data, start_state_index=start_state_index)
+        # path = get_optimal_path(
+        #     model, action_map=action_map, data=data,
+        #     start_state_index=start_state_index
+        # )
         # print("policy_loss: ", get_path_value(path=path, data=data).item())
         while not is_end_state(state_index, data):
             action_index = choose_action(

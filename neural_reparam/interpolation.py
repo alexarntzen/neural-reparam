@@ -41,7 +41,7 @@ def get_pl_curve_from_data(data) -> callable:
     k = data.shape[0]
     data_ = torch.as_tensor(data)
 
-    def pc_curve(t):
+    def pl_curve(t):
         # t = relu(t)
         # t -= relu(t - 1)
         res = torch.remainder(t, 1 / (k - 1))
@@ -51,4 +51,4 @@ def get_pl_curve_from_data(data) -> callable:
         next_index = torch.clamp(indexes + 1, 0, k - 1)
         return data_[indexes] * (1 - res * (k - 1)) + data_[next_index] * res * (k - 1)
 
-    return pc_curve
+    return pl_curve
