@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import TensorDataset
 
 from neural_reparam.interpolation import get_pl_curve_from_data
-from neural_reparam.reparam_env import r_cost, get_path_value
+from neural_reparam.reparam_env import r_cost, get_path_value, Env
 from so3.dynamic_distance import local_cost
 import experiments.curves as c1
 
@@ -24,7 +24,7 @@ class TestEnv(unittest.TestCase):
                 q_train = c1.q(x_train.unsqueeze(1).detach())
                 r_train = c1.r(x_train.unsqueeze(1).detach())
                 data = TensorDataset(x_train, q_train, r_train)
-
+                env = Env(data=data)
                 # random index and diff
                 start = np.random.randint(0, N // 3, size=2)
                 diff = np.random.randint(0, N // 3, size=2)
@@ -37,9 +37,9 @@ class TestEnv(unittest.TestCase):
                 end_index = torch.LongTensor(end)
 
                 # sum of partials for same approx
-                part_1 = r_cost(start_index, middle_index, data).item()
-                part_2 = r_cost(middle_index, end_index, data).item()
-                total = r_cost(start_index, end_index, data).item()
+                part_1 = r_cost(start_index, middle_index, env=env).item()
+                part_2 = r_cost(middle_index, end_index, env=env).item()
+                total = r_cost(start_index, end_index, env=env).item()
                 self.assertAlmostEqual(part_1 + part_2, total, delta=1e-3)
 
                 # positivity
@@ -64,10 +64,10 @@ class TestEnv(unittest.TestCase):
                 q_train = c1.q(x_train.unsqueeze(1).detach())
                 r_train = c1.r(x_train.unsqueeze(1).detach())
                 data = TensorDataset(x_train, q_train, r_train)
-
+                env = Env(data=data)
                 # compute result
                 r_eval = r_cost(
-                    state_index=start_index, next_state_index=end_index, data=data
+                    state_index=start_index, next_state_index=end_index, env=env
                 ).item()
 
                 local_cost_eval = local_cost(
@@ -84,7 +84,7 @@ class TestEnv(unittest.TestCase):
                         r_cost(
                             state_index=start_index,
                             next_state_index=end_index,
-                            data=data,
+                            env=env,
                         ).item()
 
                     def test_2():
@@ -106,10 +106,11 @@ class TestEnv(unittest.TestCase):
             q_train = c1.q(x_train.unsqueeze(1).detach())
             r_train = c1.r(x_train.unsqueeze(1).detach())
             data = TensorDataset(x_train, q_train, r_train)
+            env = Env(data=data)
 
             # calculate r_cost
             path = get_solution_path(N)
-            value = get_path_value(path=path, data=data).item()
+            value = get_path_value(path=path, env=env).item()
 
             # data
             x_train = x_train.unsqueeze(1)

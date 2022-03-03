@@ -33,7 +33,6 @@ def fit_dqn_deterministic(
     batch_size: int,
     start_state_index,
     choose_action: callable,
-    action_map: callable,
     env: Env,
     init: callable = None,
     track_history=True,
@@ -88,16 +87,16 @@ def fit_dqn_deterministic(
 
     # initialize momory
     mem_action_indexes = sample_action(env, memory_size)
-    mem_state_indexes = sample_states(data=env.data, N=memory_size)
+    mem_state_indexes = sample_states(env=env, N=memory_size)
     mem_r_costs = torch.zeros((memory_size, 1))
     for i in range(memory_size):
-        next_state_index = action_map(
+        next_state_index = env.action_map(
             action_index=mem_action_indexes[i], state_index=mem_state_indexes[i]
         )
         mem_r_costs[i] = r_cost(
             state_index=mem_state_indexes[i],
             next_state_index=next_state_index,
-            data=env.data,
+            env=env,
         )
 
     # memory is reference to data that will be updated
@@ -117,7 +116,7 @@ def fit_dqn_deterministic(
         state_index = start_state_index
         C_iter = 0
         model_hat = copy.deepcopy(model)
-        while not is_end_state(state_index, env.data):
+        while not is_end_state(state_index, env=env):
 
             if C_iter == C:
                 model_hat = copy.deepcopy(model)
@@ -129,18 +128,16 @@ def fit_dqn_deterministic(
             #  get next state and update memory
             with torch.no_grad():
                 action_index = choose_action(
-                    state_index=state_index, model=model, data=env.data
+                    state_index=state_index, model=model, env=env
                 )
 
-                next_state_index = action_map(
+                next_state_index = env.action_map(
                     action_index=action_index, state_index=state_index
                 )
                 mem_action_indexes[memory_iter] = action_index
                 mem_state_indexes[memory_iter] = state_index
                 mem_r_costs[memory_iter] = r_cost(
-                    state_index=state_index,
-                    next_state_index=next_state_index,
-                    data=env.data,
+                    state_index=state_index, next_state_index=next_state_index, env=env
                 )
 
             # get data from memory
@@ -154,12 +151,12 @@ def fit_dqn_deterministic(
                     )
                 )
             )
-            next_state_indexes_i = action_map(
+            next_state_indexes_i = env.action_map(
                 action_index=action_indexes_i, state_index=state_indexes_i
             )
 
-            states = get_state(state_index=state_indexes_i, data=env.data)
-            next_states = get_state(state_index=next_state_indexes_i, data=env.data)
+            states = get_state(state_index=state_indexes_i, env=env)
+            next_states = get_state(state_index=next_state_indexes_i, env=env)
 
             def closure():
                 # zero the parameter gradients
@@ -181,12 +178,12 @@ def fit_dqn_deterministic(
                         )[0]
 
                     Q_hat_next = torch.where(
-                        is_end_state(next_state_indexes_i, env.data),
+                        is_end_state(next_state_indexes_i, env=env),
                         torch.tensor(0, dtype=torch.float),
                         Q_hat_next_no_bound,
                     )
                     Y = gamma * Q_hat_next + r_costs_i
-                    # Y = torch.where(is_start_state(state_indexes_i, env.data),
+                    # Y = torch.where(is_start_state(state_indexes_i, env= env),
                     #                 torch.tensor(0, dtype=torch.float),
                     #                 gamma * Q_hat_next_no_bound + r_costs_i)
                 Q_optim = torch.gather(model(states), dim=-1, index=action_indexes_i)
@@ -199,9 +196,7 @@ def fit_dqn_deterministic(
 
             state_index = next_state_index
         if track_history:
-            train_loss = compute_loss(
-                model=model, action_map=action_map, data=env.data
-            ).detach()
+            train_loss = compute_loss(model=model, env=env).detach()
 
             loss_history_train[epoch] = train_loss
             if track_history:
