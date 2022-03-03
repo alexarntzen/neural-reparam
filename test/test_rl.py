@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import TensorDataset
 
 from neural_reparam.interpolation import get_pl_curve_from_data
-from neural_reparam.reinforcement_learning import r_cost, get_path_value
+from neural_reparam.reparam_env import r_cost, get_path_value
 from so3.dynamic_distance import local_cost
 import experiments.curves as c1
 
