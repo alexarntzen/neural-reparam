@@ -45,22 +45,3 @@ def get_elastic_metric_loss(r: callable, constrain_cost=0, verbose=False):
 def compute_loss_reparam(loss_func, model: callable, x_train, y_train):
     loss = loss_func(model, x_train, y_train)
     return loss
-
-
-def batch_reinforcement_learning(Q: callable, r: callable, states, next):
-    """On policy Q learning with discretized action and time
-    Q(s): (X x T) --> [0, inf )^#A
-    """
-    # choose actions and compute next
-    Q_est = Q(states)
-    actions = torch.amax(Q_est).no_grad()
-    states_next = next(states, actions)
-
-    r_est = r(states, actions)
-
-    # calculate max
-    Q_est_next = Q(states_next).no_grad() * torch.unsqueeze(states == 1, dim=-1)
-
-    # calculate goal
-    Y_est = r_est + Q_est_next
-    return l2_loss(Y_est - Q_est)

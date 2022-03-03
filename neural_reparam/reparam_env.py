@@ -5,15 +5,14 @@ from scipy.interpolate import interp1d
 from scipy.integrate import trapezoid
 import torch
 import torch.nn as nn
-
-# import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 from torch.utils.data import dataset
 from typing import Union
 
+from deepthermal.plotting import plot_result_sorted
+
 State = torch.LongTensor
 
-# penalty = 1er
-# penalty_ = torch.tensor(penalty)
 zero_ = torch.tensor(0.0)
 l2_loss = nn.MSELoss()
 
@@ -21,9 +20,20 @@ l2_loss = nn.MSELoss()
 class Env:
     def __init__(self, data: dataset, depth: int = 4):
         self.data = data
-        self.action_map, self.num_actions = get_action_map(
-            depth=depth, N=data[:][0].size(0)
-        )
+        self.action_map, self.num_actions = get_action_map(depth, N=data[:][0].size(0))
+
+
+class DiscreteReparamEnv(Env):
+    def __init__(self, data: dataset, depth: int):
+        super().__init__(data=data, depth=depth)
+        self.is_start_state = is_start_state
+        self.is_end_state = is_end_state
+        self.get_state = get_state
+        self.r_cost = r_cost
+        self.is_end_state = is_end_state
+        self.sample_states = sample_states
+        self.sample_action = sample_action
+        self.start_state_index = torch.LongTensor([0, 0])
 
 
 @torch.no_grad()
@@ -194,63 +204,6 @@ def get_path_value(path: torch.LongTensor, env: Env) -> torch.Tensor:
     return value
 
 
-# @torch.no_grad()
-# def plot_solution(q_model, path_compare):
-#     with torch.no_grad():
-#         x_eval, *_ = data[:]
-#
-#         N = len(data)
-#         grid = x_eval[np.indices((N, N)).T]
-#
-#         cost_matrix = torch.min(q_model(grid).detach(), dim=-1)[0]
-#         indexes = get_optimal_path(q_model=q_model, action_map=action_map, data=data)
-#
-#         fig, ax = plt.subplots(1)
-#         plot = ax.imshow(cost_matrix, extent=[0, 1, 0, 1], origin="lower")
-#         plt.colorbar(plot)
-#
-#         ax.scatter(x_eval[indexes[:, 0]], x_eval[indexes[:, 1]], label="DQN")
-#         ksi_eval = ksi(x_eval.unsqueeze(1))
-#         ax.plot(x_eval, ksi_eval, label="true")
-#         plt.legend()
-#
-#         plt.show()
-#         ksi = c1.ksi
-#         x_eval, *_ = data[:]
-#
-#         N = len(data)
-#         ind = torch.tensor(np.indices((N, N)).T)
-#         grid = x_eval[ind]
-#
-#         cost_matrix = torch.min(model(grid.float()).detach(), dim=-1)[0]
-#         indexes = get_optimal_path(q_model=model, action_map=action_map, data=data)
-#
-#         fig, ax = plt.subplots(1)
-#         plot = ax.imshow(cost_matrix, extent=[0,1,0,1], origin="lower")
-#         plt.colorbar(plot)
-#
-#         ax.scatter(x_eval[indexes[:, 0]], x_eval[indexes[:,1]],label="DQN")
-#         ksi_eval = ksi(x_eval.unsqueeze(1))
-#         ax.plot(x_eval, ksi_eval, label = "true")
-#         plt.legend()
-#
-#         plt.show()
-#         cost_matrix = torch.argmin(model(grid.float()).detach(), dim=-1)
-#         indexes = get_optimal_path(q_model=model, action_map=action_map, data=data)
-#
-#         fig, ax = plt.subplots(1)
-#         plot = ax.imshow(cost_matrix, extent=[0,1,0,1], origin="lower")
-#         plt.colorbar(plot)
-#
-#         ax.scatter(x_eval[indexes[:, 0]], x_eval[indexes[:,1]],label="DQN")
-#         ksi_eval = ksi(x_eval.unsqueeze(1))
-#         ax.plot(x_eval, ksi_eval, label = "true")
-#         plt.legend()
-#
-#         plt.show()
-#         return ax
-
-
 def compute_loss_rl(model: callable, env: Env):
     path = get_optimal_path(q_model=model, env=env)
     return get_path_value(path=path, env=env)
@@ -258,7 +211,7 @@ def compute_loss_rl(model: callable, env: Env):
 
 def sample_states(env: Env, N: int = 1) -> State:
     grid_len = len(env.data)
-    states = torch.randint(0, grid_len, size=(N, 2), dtype=torch.long)
+    states = torch.randint(0, grid_len, size=(N, 2), dtype=torch.long).long()
     return states
 
 
@@ -266,5 +219,28 @@ def sample_action(
     env: Env,
     N: int = 1,
 ) -> torch.LongTensor:
-    actions = torch.randint(0, env.num_actions, size=(N, 1), dtype=torch.long)
+    actions = torch.randint(0, env.num_actions, size=(N, 1), dtype=torch.long).long()
     return actions
+
+
+@torch.no_grad()
+def plot_solution_rl(model, env: Env, **kwargs):
+    print("new plot")
+    x_eval, *_ = env.data[:]
+    N = len(x_eval)
+    grid = x_eval[np.indices((N, N)).T]
+
+    # comptue cost
+    cost_matrix = torch.min(model(grid).detach(), dim=-1)[0]
+    computed_path_indexes = get_optimal_path(q_model=model, env=env)
+    computed_path = x_eval[computed_path_indexes]
+
+    # add V values to axes
+    fig, ax = plt.subplots(1)
+    plot = ax.imshow(cost_matrix, extent=[0, 1, 0, 1], origin="lower")
+    fig.colorbar(plot)
+
+    plot_result_sorted(
+        x_pred=computed_path[:, 0], y_pred=computed_path[:, 1], fig=fig, **kwargs
+    )
+    return fig
