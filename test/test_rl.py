@@ -5,7 +5,7 @@ import torch
 from torch.utils.data import TensorDataset
 
 from neural_reparam.interpolation import get_pl_curve_from_data
-from neural_reparam.reparam_env import r_cost, get_path_value, Env
+from neural_reparam.reparam_env import r_cost, get_path_value, DiscreteReparamEnv
 from so3.dynamic_distance import local_cost
 import experiments.curves as c1
 
@@ -24,7 +24,7 @@ class TestEnv(unittest.TestCase):
                 q_train = c1.q(x_train.unsqueeze(1).detach())
                 r_train = c1.r(x_train.unsqueeze(1).detach())
                 data = TensorDataset(x_train, q_train, r_train)
-                env = Env(data=data)
+                env = DiscreteReparamEnv(data=data)
                 # random index and diff
                 start = np.random.randint(0, N // 3, size=2)
                 diff = np.random.randint(0, N // 3, size=2)
@@ -43,7 +43,7 @@ class TestEnv(unittest.TestCase):
                 self.assertAlmostEqual(part_1 + part_2, total, delta=1e-3)
 
                 # positivity
-                self.assertTrue(total > 0)
+                self.assertTrue(total >= 0)
 
     def test_compare_local(self, check_time=False):
         # Load data
@@ -64,7 +64,7 @@ class TestEnv(unittest.TestCase):
                 q_train = c1.q(x_train.unsqueeze(1).detach())
                 r_train = c1.r(x_train.unsqueeze(1).detach())
                 data = TensorDataset(x_train, q_train, r_train)
-                env = Env(data=data)
+                env = DiscreteReparamEnv(data=data)
                 # compute result
                 r_eval = r_cost(
                     state_index=start_index, next_state_index=end_index, env=env
@@ -106,7 +106,7 @@ class TestEnv(unittest.TestCase):
             q_train = c1.q(x_train.unsqueeze(1).detach())
             r_train = c1.r(x_train.unsqueeze(1).detach())
             data = TensorDataset(x_train, q_train, r_train)
-            env = Env(data=data)
+            env = DiscreteReparamEnv(data=data)
 
             # calculate r_cost
             path = get_solution_path(N)

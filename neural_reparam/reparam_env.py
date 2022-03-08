@@ -20,20 +20,40 @@ l2_loss = nn.MSELoss()
 class Env:
     def __init__(self, data: dataset, depth: int = 4):
         self.data = data
-        self.action_map, self.num_actions = get_action_map(depth, N=data[:][0].size(0))
+        self.N = data[:][0].size(0)
+        self.get_state = get_state
+        self.sample_states = sample_states
+        self.sample_action = sample_action
+
+        self.action_map = None
+        self.num_actions = None
+        self.is_start_state = None
+        self.is_end_state = None
+        self.r_cost = None
+        self.start_state_index = None
 
 
 class DiscreteReparamEnv(Env):
-    def __init__(self, data: dataset, depth: int):
+    def __init__(self, data: dataset, depth: int = 4):
         super().__init__(data=data, depth=depth)
+        self.action_map, self.num_actions = get_action_map(depth, N=self.N)
         self.is_start_state = is_start_state
         self.is_end_state = is_end_state
         self.get_state = get_state
         self.r_cost = r_cost
-        self.is_end_state = is_end_state
-        self.sample_states = sample_states
-        self.sample_action = sample_action
         self.start_state_index = torch.LongTensor([0, 0])
+
+
+class DiscreteReparamReverseEnv(Env):
+    def __init__(self, data: dataset, depth: int):
+        super().__init__(data=data, depth=depth)
+        self.action_map, self.num_actions = get_action_map(
+            depth, N=self.N, reverse=True
+        )
+        self.is_start_state = is_end_state
+        self.is_end_state = is_start_state
+        self.r_cost = r_cost_reverse
+        self.start_state_index = torch.LongTensor([self.N - 1, self.N - 1])
 
 
 @torch.no_grad()
@@ -87,12 +107,18 @@ def r_cost(
         ksi_diff = index_diff[1] / index_diff[0]
         integrand = torch.sum((q_int - torch.sqrt(ksi_diff) * r_int) ** 2, dim=-1)
 
-    start_t = get_state(state_index=state_index, env=env)[0]
-    end_t = get_state(state_index=next_state_index, env=env)[0]
+    start_t = env.get_state(state_index=state_index, env=env)[0]
+    end_t = env.get_state(state_index=next_state_index, env=env)[0]
 
     # compute integral
     r_int = trapezoid(integrand, tx_indices) * (end_t - start_t) / tx_indices[-1]
     return r_int
+
+
+def r_cost_reverse(
+    state_index: torch.LongTensor, next_state_index: torch.LongTensor, env: Env
+) -> torch.Tensor:
+    return r_cost(state_index=next_state_index, next_state_index=state_index, env=env)
 
 
 def get_epsilon_greedy(epsilon: float, num_actions: int) -> callable:
@@ -134,7 +160,7 @@ def get_optimal_action(
     return action_index
 
 
-def get_action_map(depth, N: int):
+def get_action_map(depth, N: int, reverse: bool = False):
     # assumes same base
     # hack to make a list of all admissible directions (in reverse)
     max_grid_index = torch.tensor(N - 1).long()
@@ -146,6 +172,8 @@ def get_action_map(depth, N: int):
             if gcd(x, y) == 1
         ]
     )
+    if reverse:
+        action_array *= -1
 
     # could also have used np.unravel_index
     def action_map(
@@ -159,7 +187,9 @@ def get_action_map(depth, N: int):
 
         # It is strange that actions act on state indices, but it should work
         action = action_array[action_index[..., 0]]
-        new_state_index = torch.minimum(state_index + action, max_grid_index).long()
+        new_state_index = torch.clamp(
+            state_index + action, min=0, max=max_grid_index
+        ).long()
         return new_state_index
 
     return action_map, len(action_array)
@@ -168,11 +198,10 @@ def get_action_map(depth, N: int):
 def get_optimal_path(
     q_model: callable,
     env: Env,
-    start_state_index=torch.LongTensor([[0, 0]]),
 ) -> Union[torch.LongTensor, None]:
     # q_model: callable, state_index: torch.LongTensor, data: dataset
     # no beautiful recursion here, python is stupid :(
-    state_index = start_state_index.detach().clone()
+    state_index = env.start_state_index.detach().clone()
     t_data = env.data[:][0]
     N, dim = t_data.size(0), len(state_index.flatten())
     index_tensor = torch.zeros((2 * N, dim), dtype=torch.long)
@@ -180,7 +209,7 @@ def get_optimal_path(
     for i in range(1, 2 * N):
 
         # return if found total
-        if is_end_state(state_index, env=env):
+        if env.is_end_state(state_index, env=env):
             return index_tensor[:i]
 
         action_index = get_optimal_action(
@@ -200,7 +229,7 @@ def get_path_value(path: torch.LongTensor, env: Env) -> torch.Tensor:
         return torch.tensor(torch.inf)
     value = torch.zeros(1)
     for i in range(len(path) - 1):
-        value += r_cost(state_index=path[i], next_state_index=path[i + 1], env=env)
+        value += env.r_cost(state_index=path[i], next_state_index=path[i + 1], env=env)
     return value
 
 
@@ -211,8 +240,8 @@ def compute_loss_rl(model: callable, env: Env):
 
 def sample_states(env: Env, N: int = 1) -> State:
     grid_len = len(env.data)
-    states = torch.randint(0, grid_len, size=(N, 2), dtype=torch.long).long()
-    return states
+    states = torch.randint(0, grid_len, size=(N, 1), dtype=torch.long).long()
+    return torch.cat((states, states), dim=1)
 
 
 def sample_action(
@@ -225,10 +254,11 @@ def sample_action(
 
 @torch.no_grad()
 def plot_solution_rl(model, env: Env, **kwargs):
-    print("new plot")
     x_eval, *_ = env.data[:]
     N = len(x_eval)
-    grid = x_eval[np.indices((N, N)).T]
+    ind = torch.as_tensor(np.indices((N, N)).T)
+
+    grid = x_eval[ind]
 
     # comptue cost
     cost_matrix = torch.min(model(grid).detach(), dim=-1)[0]
