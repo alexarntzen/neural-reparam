@@ -1,5 +1,6 @@
 numpy>=1.18.2
-matplotlib==3.4.0
+matplotlib==3.5.1
 torch==1.10.2
 git+https://github.com/alexarntzen/deepthermal.git@new_usage#egg=deepthermal
 seaborn==0.11.2
+scikit-learn>=1.0.2
