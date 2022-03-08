@@ -74,7 +74,7 @@ def r_cost(
     if state_index[1] == next_state_index[1]:
         # if x does not change compute
         tx_indices = torch.arange(0, index_diff[0] + 1)
-        integrand = torch.sum(q_eval ** 2, dim=-1)
+        integrand = torch.sum(q_eval**2, dim=-1)
 
     else:
         gcd = torch.gcd(index_diff[..., 0], index_diff[..., 1])

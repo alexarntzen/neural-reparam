@@ -100,7 +100,7 @@ class TestEnv(unittest.TestCase):
     def test_compare_ksi(self):
         print("\nComputing estimated optimal solution:")
         # Load data
-        for N in [256 ** 2, 512 ** 2, 1024 ** 2]:
+        for N in [256**2, 512**2, 1024**2]:
             # data
             x_train = torch.linspace(0, 1, N, requires_grad=True)
             q_train = c1.q(x_train.unsqueeze(1).detach())
