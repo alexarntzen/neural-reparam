@@ -6,7 +6,10 @@ from torch.utils.data import TensorDataset
 
 from neural_reparam.interpolation import get_pl_curve_from_data
 from neural_reparam.reparam_env import r_cost, get_path_value, DiscreteReparamEnv
-from so3.dynamic_distance import local_cost
+try:
+    from so3.dynamic_distance import local_cost
+except:
+    local_cost =None
 import experiments.curves as c1
 
 import timeit
@@ -50,7 +53,8 @@ class TestEnv(unittest.TestCase):
         print("\nComparing to local_cost function:")
         for _ in range(10):
             for N in [256, 1024, 4096]:
-
+                if local_cost is None:
+                    break;
                 # random index
                 start = np.random.randint(0, N, size=2)
                 end = np.random.randint(start, (N, N), size=2)
