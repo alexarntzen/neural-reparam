@@ -3,7 +3,9 @@ Cost functions associated with the SRV form. || q - sqrt(ksi_dx)r circ ksi||_{L^
 """
 import torch
 import torch.nn as nn
+from torch.utils.data import TensorDataset
 import torch.autograd as autograd
+from typing import Union, List
 
 l2_loss = nn.MSELoss()
 
@@ -13,8 +15,8 @@ def get_elastic_metric_loss(r: callable, constrain_cost=0, verbose=False):
     q is the original curve"""
     ReLU = nn.ReLU()
 
-    zero = torch.zeros((1, 1), dtype=torch.long)
-    one = torch.ones((1, 1), dtype=torch.long)
+    zero = torch.zeros((1, 1), dtype=torch.float)
+    one = torch.ones((1, 1), dtype=torch.float)
 
     def elastic_metric_loss(ksi_model: callable, x_train, y_train):
         q_eval = y_train
@@ -42,6 +44,9 @@ def get_elastic_metric_loss(r: callable, constrain_cost=0, verbose=False):
     return elastic_metric_loss
 
 
-def compute_loss_reparam(loss_func, model: callable, x_train, y_train):
+def compute_loss_reparam(
+    model: nn.Module, data: Union[List, TensorDataset], loss_func: callable
+):
+    x_train, y_train = data[:]
     loss = loss_func(model, x_train, y_train)
     return loss
