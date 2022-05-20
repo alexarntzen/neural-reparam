@@ -38,7 +38,7 @@ def fit_dqn_deterministic(
     memory_size: int = 20,
     DDQN: bool = False,
     lr_scheduler=None,
-    **kwargs
+    **kwargs,
 ) -> tuple[callable, torch.Tensor, torch.Tensor]:
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
@@ -108,7 +108,7 @@ def fit_dqn_deterministic(
                 " ################################",
             )
         # init epoch
-        state_index = env.start_state_index
+        state_index = env.start_state
         C_iter = 0
         model_hat = copy.deepcopy(model)
         while not env.is_end_state(state_index, env=env):
