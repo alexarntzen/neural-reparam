@@ -322,3 +322,24 @@ def epsilon_greedy(model: callable, env: ReparamEnv, epsilon: float = 0.01) -> i
 def preprocess_states(*states, env: ReparamEnv):
     for state in states:
         yield torch.as_tensor(env.preprocess_state(state), dtype=torch.float32)
+
+
+def get_optimal_path(
+    model: callable,
+    env: ReparamEnv,
+    max_ep_len: int = None,
+) -> np.ndarray:
+    o1, d = env.reset(), False
+    if max_ep_len is None:
+        max_ep_len = env.size**2
+
+    state_list = [o1]
+    a = get_optimal_action(model=model, state=o1, env=env)
+
+    for i in range(max_ep_len):
+        o2, r, d, _ = env.step(action=a)
+        state_list.append(o2)
+
+        if d:
+            break
+    return np.array(state_list)

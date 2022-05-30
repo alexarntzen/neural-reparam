@@ -12,7 +12,14 @@ from neural_reparam.reparam_env import (
     DiscreteReparamReverseEnv,
 )
 
-from signatureshape.so3.dynamic_distance import local_cost
+try:
+    from signatureshape.so3.dynamic_distance import local_cost
+
+    LOCAL_COST_EXISTS = True
+except ImportError:
+    print("No such module")
+    LOCAL_COST_EXISTS = False
+
 import experiments.curves as c1
 
 import timeit
@@ -121,22 +128,23 @@ class TestEnv(unittest.TestCase):
                 r_eval = r_cost(state_index=start, next_state_index=end, env=env).item()
                 r_eval_real = env_real._r_cost(start / N, end / N)
                 r_eval_real2 = env_real2._r_cost(start / N, end / N)
-                local_cost_eval = local_cost(
-                    *start, *end, q0=q_train, q1=r_train, I=x_train
-                )
+                if LOCAL_COST_EXISTS:
+                    local_cost_eval = local_cost(
+                        *start, *end, q0=q_train, q1=r_train, I=x_train
+                    )
 
-                print(
-                    f"r_real_cost:{r_eval_real}, r_cost:{r_eval},"
-                    f" local_cost: {local_cost_eval}"
-                )
-                # compare to descrete
-                self.assertAlmostEqual(
-                    r_eval, local_cost_eval, delta=local_cost_eval * 100 / N
-                )
-                # compare to real
-                self.assertAlmostEqual(
-                    r_eval_real, local_cost_eval, delta=local_cost_eval * 100 / N
-                )
+                    print(
+                        f"r_real_cost:{r_eval_real}, r_cost:{r_eval},"
+                        f" local_cost: {local_cost_eval}"
+                    )
+                    # compare to descrete
+                    self.assertAlmostEqual(
+                        r_eval, local_cost_eval, delta=local_cost_eval * 100 / N
+                    )
+                    # compare to real
+                    self.assertAlmostEqual(
+                        r_eval_real, local_cost_eval, delta=local_cost_eval * 100 / N
+                    )
 
                 # compare two reals
                 self.assertAlmostEqual(

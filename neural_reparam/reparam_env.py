@@ -5,13 +5,12 @@ from scipy.interpolate import interp1d
 from scipy.integrate import trapezoid
 import torch
 import torch.nn as nn
-import matplotlib.pyplot as plt
 from typing import Union
 
-from deepthermal.plotting import plot_result_sorted
 import gym
 from typing import Optional
-from neural_reparam.reinforcement_learning import get_optimal_action
+
+# from neural_reparam.reinforcement_learning import get_optimal_path
 
 
 zero_ = torch.tensor(0.0)
@@ -343,35 +342,6 @@ def get_action_map(depth, size: int, reverse: bool = False):
     return action_map, len(action_array)
 
 
-def get_optimal_path(
-    q_model: callable,
-    env: ReparamEnv,
-) -> Union[torch.LongTensor, None]:
-    # q_model: callable, state_index: torch.LongTensor, data: dataset
-    # no beautiful recursion here, python is stupid :(
-    state_index = env.start_state_index.detach().clone()
-    t_data = env.data[:][0]
-    size, dim = t_data.size(0), len(state_index.flatten())
-    index_tensor = torch.zeros((2 * size, dim), dtype=torch.long)
-    index_tensor[0] = state_index
-    for i in range(1, 2 * size):
-
-        # return if found total
-        if env.is_end_state(state_index, env=env):
-            return index_tensor[:i]
-
-        action_index = get_optimal_action(
-            q_model=q_model, state_index=state_index, env=env
-        )
-
-        # update
-        state_index = env.action_map(action_index=action_index, state_index=state_index)
-
-        # store next
-        index_tensor[i] = state_index
-    return None
-
-
 def sample_states(env: ReparamEnv, N: int = 1):
     grid_len = len(env.data)
     states = torch.randint(0, grid_len, size=(N, 1), dtype=torch.long).long()
@@ -384,27 +354,3 @@ def sample_action(
 ) -> torch.LongTensor:
     actions = torch.randint(0, env.num_actions, size=(N, 1), dtype=torch.long).long()
     return actions
-
-
-@torch.no_grad()
-def plot_solution_rl(model, env: ReparamEnv, **kwargs):
-    x_eval, *_ = env.data[:]
-    size = len(x_eval)
-    ind = torch.as_tensor(np.indices((size, size)).T)
-
-    grid = x_eval[ind]
-
-    # comptue cost
-    cost_matrix = torch.min(model(grid).detach(), dim=-1)[0]
-    computed_path_indexes = get_optimal_path(q_model=model, env=env)
-    computed_path = x_eval[computed_path_indexes]
-
-    # add V values to axes
-    fig, ax = plt.subplots(1)
-    plot = ax.imshow(cost_matrix, extent=[0, 1, 0, 1], origin="lower")
-    fig.colorbar(plot)
-
-    plot_result_sorted(
-        x_pred=computed_path[:, 0], y_pred=computed_path[:, 1], fig=fig, **kwargs
-    )
-    return fig
