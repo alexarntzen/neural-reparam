@@ -6,16 +6,13 @@ from scipy.integrate import trapezoid
 import torch
 import torch.nn as nn
 import matplotlib.pyplot as plt
-from torch.utils.data import Dataset
 from typing import Union
 
 from deepthermal.plotting import plot_result_sorted
-
 import gym
-from gym import spaces
 from typing import Optional
+from neural_reparam.reinforcement_learning import get_optimal_action
 
-State = torch.LongTensor
 
 zero_ = torch.tensor(0.0)
 l2_loss = nn.MSELoss()
@@ -29,8 +26,9 @@ class ReparamEnv(gym.Env):
         render_mode: Optional[str] = None,
         q_func: callable = None,
         r_func: callable = None,
-        data: Dataset = None,
+        data: tuple = None,
         size: int = None,
+        action_penalty=0,
     ):
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         assert (
@@ -38,7 +36,6 @@ class ReparamEnv(gym.Env):
         ) or data is not None
 
         if data is not None:
-            self.data = data
             self.t_data, self.q_data, self.r_data = data[:]
             self.size = len(self.t_data)
 
@@ -47,25 +44,24 @@ class ReparamEnv(gym.Env):
             self.r = r_func
             self.size = size
             if data is None:
-                self.t_data = torch.linspace(0, 1, size)
+                self.t_data = np.linspace(0, 1, size)
                 self.q_data = q_func(self.t_data)
                 self.r_data = r_func(self.t_data)
-                self.data = torch.utils.data.TensorDataset(
-                    self.t_data, self.q_data, self.r_data
-                )
         else:
             self.q = interp1d(
                 y=self.q_data,
-                x=self.t_data.flatten().detach().numpy(),
+                x=self.t_data.flatten(),
                 axis=0,
                 assume_sorted=True,
             )
             self.r = interp1d(
                 y=self.r_data,
-                x=self.t_data.flatten().detach().numpy(),
+                x=self.t_data,
                 axis=0,
                 assume_sorted=True,
             )
+
+        self.action_penaly = action_penalty
 
         self.rgb_array_white = np.empty([self.size, self.size, 3], dtype=int)
         self.rgb_array_white.fill(255)
@@ -79,26 +75,26 @@ class ReparamEnv(gym.Env):
 
         self.state = self.start_state
         observation = self.state
-
-        if isinstance(observation, torch.Tensor):
-            observation = observation.numpy()
         return (observation, dict()) if return_info else observation
 
     def step(
         self, action: gym.core.ActType
     ) -> tuple[gym.core.ObsType, float, bool, dict]:
+        action, penalty = self._validate_action(action)
         # update state
         new_state = self._action_map(action=action, state=self.state)
 
         # An episode is done if the agent has reached the target
         done = self._is_end_state(state=new_state)
-        reward = self._r_cost(state=self.state, next_state=new_state)
-        observation = new_state
 
+        # reward is negative cost
+        reward = -self._r_cost(state=self.state, next_state=new_state) - penalty
+        observation = new_state
         self.state = new_state
         if isinstance(observation, torch.Tensor):
-            observation = observation.numpy()
-        return observation, reward, done, dict()
+            return observation.numpy(), reward, done, dict()
+        else:
+            return observation, reward, done, dict()
 
     def render(self, mode="rgb_array"):
         if mode == "rgb_array":
@@ -107,25 +103,26 @@ class ReparamEnv(gym.Env):
         else:
             super(ReparamEnv, self).render(mode=mode)  # just raise an exception
 
+    def _validate_action(self, action):
+        raise NotImplementedError
+
+    def preprocess_state(self, state: np.ndarray = None) -> np.ndarray:
+        if state is None:
+            return self.state
+        else:
+            return state
+
 
 class RealReparamEnv(ReparamEnv):
     metadata = {"render_modes": ["rgb_array"]}
 
-    def __init__(
-        self,
-        render_mode: Optional[str] = None,
-        q_func: callable = None,
-        r_func: callable = None,
-        data: Dataset = None,
-        size: int = None,
-    ):
-        super().__init__(
-            render_mode=render_mode, q_func=q_func, r_func=r_func, data=data, size=size
-        )
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
 
-        self.observation_space = spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32)
-        self.action_space = spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32)
-        self.reward_range = spaces.Box(low=0, high=np.inf, shape=(2,), dtype=np.float32)
+        self.observation_space = gym.spaces.Box(
+            low=0, high=1, shape=(2,), dtype=np.float32
+        )
+        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
 
         self.end_state = np.ones(2, dtype=np.float32)
         self.start_state = np.zeros(2, dtype=np.float32)
@@ -133,10 +130,26 @@ class RealReparamEnv(ReparamEnv):
         self.reset()
 
     def _action_map(self, action, state):
+        # dx_dt = np.clip(action, -1, np.inf).item() + 1
+        #
+        # dt = np.random.rand()/self.size
+        # dx = dx_dt * dt
+        # action_step = np.array([dx, dt], dtype=np.float32)
         return np.clip(self.state + action, 0, 1)
 
     def _is_end_state(self, state):
         return np.array_equal(state, self.end_state)
+
+    def _validate_action(self, action) -> tuple[gym.core.ActType, float]:
+        # action_mod = np.clip(action,-1,np.inf)
+        # penalty = (action_mod - action)*self.action_penaly
+        action = action * 0.5 + 0.5
+        max_diff = self.end_state - self.state
+        action_diff = np.clip(action - max_diff, 0, np.inf)
+        action_diff -= 100 * np.clip(action, -np.inf, 0)
+        penalty = np.sum(action_diff) * self.action_penaly
+        action_mod = np.clip(action, 0, max_diff)
+        return action_mod, penalty
 
     def get_state_index(self) -> tuple:
         return round(self.state[0] * self.size), round(self.state[1] * self.size)
@@ -147,15 +160,14 @@ class RealReparamEnv(ReparamEnv):
         t_0, x_0 = state
         t_1, x_1 = next_state
         dt, dx = next_state - state
+        assert dt >= 0 and dx >= 0
         if dt == 0:
-            return 0
+            return 0  # penalty
 
-        num_integration_points = round(2 * max(dt, dx) * self.size)
-
+        num_integration_points = round(max(dt, dx) * self.size) + 2
         # make a list of values to integrate
         t_values = np.linspace(t_0, t_1, num_integration_points, dtype=np.float32)
         x_values = np.linspace(x_0, x_1, num_integration_points, dtype=np.float32)
-
         # calculate the shifted r and q values
         r_shifted_values = self.r(x_values)
         q_values = self.q(t_values)
@@ -164,34 +176,29 @@ class RealReparamEnv(ReparamEnv):
         integrand = np.sum(
             (q_values - r_shifted_values * np.sqrt(dx / dt)) ** 2, axis=-1
         )
-        return trapezoid(integrand, t_values).item()
+        penalty = 1 if dx == 0 else 0
+        return trapezoid(integrand, t_values).item() + penalty
 
 
 class DiscreteReparamEnv(ReparamEnv):
     def __init__(self, depth: int = 4, **kwargs):
         super().__init__(**kwargs)
         self.depth = depth
-        self.get_state = get_state
-        self.sample_states = sample_states
-        self.sample_action = sample_action
 
         self.action_map, self.num_actions = get_action_map(depth, size=self.size)
         self.is_start_state = is_start_state
         self.is_end_state = is_end_state
-        self.get_state = get_state
         self.r_cost = r_cost
-        self.start_state = torch.LongTensor([0, 0])
 
-        self.observation_space = spaces.Box(
-            low=0, high=self.size, shape=(2,), dtype=int
+        self.observation_space = gym.spaces.Box(
+            low=0, high=self.size - 1, shape=(2,), dtype=int
         )
-        self.action_space = spaces.Box(
-            low=0, high=self.num_actions - 1, shape=(2,), dtype=int
+        self.action_space = gym.spaces.Box(
+            low=0, high=self.num_actions - 1, shape=(1,), dtype=int
         )
-        self.reward_range = spaces.Box(low=0, high=np.inf, shape=(2,), dtype=float)
 
-        self.end_state = torch.ones(2, dtype=int) * self.size
-        self.start_state = torch.zeros(2, dtype=int)
+        self.end_state = np.ones(2, dtype=int) * self.size - 1
+        self.start_state = np.zeros(2, dtype=int)
 
         self.reset()
 
@@ -203,11 +210,18 @@ class DiscreteReparamEnv(ReparamEnv):
 
     def _r_cost(self, state, next_state):
         return self.r_cost(
-            env=self, state_index=self.state, next_state_index=next_state
+            env=self, state_index=state, next_state_index=next_state
         ).item()
 
     def get_state_index(self) -> tuple:
         return self.state
+
+    def preprocess_state(self, state: np.ndarray = None) -> np.ndarray:
+        return self.t_data[self.state]
+
+    def _validate_action(self, action):
+        assert 0 <= action < self.num_actions
+        return action, 0
 
 
 class DiscreteReparamReverseEnv(DiscreteReparamEnv):
@@ -219,63 +233,56 @@ class DiscreteReparamReverseEnv(DiscreteReparamEnv):
         self.is_start_state = is_end_state
         self.is_end_state = is_start_state
         self.r_cost = r_cost_reverse
-        self.start_state_index = torch.LongTensor([self.size - 1, self.size - 1])
+        self.start_state_index = np.ones(2) * self.size - 1
+
+        self.end_state, self.start_state = self.start_state, self.end_state
 
 
-@torch.no_grad()
 def r_cost(
-    state_index: torch.LongTensor, next_state_index: torch.LongTensor, env: ReparamEnv
-) -> torch.Tensor:
-    assert torch.all(next_state_index >= state_index), "wrong direction"
+    state_index: np.ndarray, next_state_index: np.ndarray, env: ReparamEnv
+) -> float:
+    assert np.all(np.greater_equal(next_state_index, state_index)), "wrong direction"
     if state_index[0] == next_state_index[0]:
         return zero_
     # elif torch.any(state_index == next_state_index):
     #     return penalty_
 
-    _, q_data, r_data = env.t_data, env.q_data, env.r_data
+    t_data, q_data, r_data = env.t_data, env.q_data, env.r_data
     q_eval = q_data[state_index[0] : next_state_index[0] + 1]
     r_eval = r_data[state_index[1] : next_state_index[1] + 1]
 
     index_diff = next_state_index - state_index
     if state_index[1] == next_state_index[1]:
         # if x does not change compute
-        tx_indices = torch.arange(0, index_diff[0] + 1)
-        integrand = torch.sum(q_eval**2, dim=-1)
-
+        tx_indices = np.arange(0, index_diff[0] + 1)
+        integrand = np.sum(q_eval**2, axis=-1)
     else:
-        gcd = torch.gcd(index_diff[..., 0], index_diff[..., 1])
+        gcd = np.gcd(index_diff[..., 0], index_diff[..., 1])
 
         # find the lowest iteger to represent the points on the interval using ints
-        product_index = torch.div(
-            torch.prod(index_diff, dtype=torch.long), gcd, rounding_mode="floor"
-        )
+        product_index = np.prod(index_diff, dtype=int) // gcd
         # one extra since we want the end state included
         common_length = product_index + 1
 
         # compute common indexes
-        t_spacing = torch.div(index_diff[1], gcd, rounding_mode="floor").item()
-        x_spacing = torch.div(index_diff[0], gcd, rounding_mode="floor").item()
-        t_indices = torch.arange(0, common_length, t_spacing, dtype=torch.long)
-        x_indices = torch.arange(0, common_length, x_spacing, dtype=torch.long)
-        tx_indices = torch.LongTensor(np.union1d(t_indices, x_indices))
-
+        t_spacing = index_diff[1] // gcd
+        x_spacing = index_diff[0] // gcd
+        t_indices = np.arange(0, common_length, t_spacing.item(), dtype=int)
+        x_indices = np.arange(0, common_length, x_spacing.item(), dtype=int)
+        tx_indices = np.union1d(t_indices, x_indices)
         # compute integrand with interpolated values
-        r_int = torch.from_numpy(
-            interp1d(x_indices, r_eval, axis=0, kind="linear", assume_sorted=True)(
-                tx_indices
-            )
+        r_int = interp1d(x_indices, r_eval, axis=0, kind="linear", assume_sorted=True)(
+            tx_indices
         )
-        q_int = torch.from_numpy(
-            interp1d(t_indices, q_eval, axis=0, kind="linear", assume_sorted=True)(
-                tx_indices
-            )
+        q_int = interp1d(t_indices, q_eval, axis=0, kind="linear", assume_sorted=True)(
+            tx_indices
         )
         ksi_diff = index_diff[1] / index_diff[0]
-        integrand = torch.sum((q_int - torch.sqrt(ksi_diff) * r_int) ** 2, dim=-1)
+        integrand = np.sum((q_int - np.sqrt(ksi_diff) * r_int) ** 2, axis=-1)
+    start_t = t_data[state_index[0]]
+    end_t = t_data[next_state_index[0]]
 
-    start_t = env.get_state(state_index=state_index, env=env)[0]
-    end_t = env.get_state(state_index=next_state_index, env=env)[0]
-
+    # print("internal", integrand,tx_indices, start_t, end_t)
     # compute integral
     r_int = trapezoid(integrand, tx_indices) * (end_t - start_t) / tx_indices[-1]
     return r_int
@@ -287,28 +294,15 @@ def r_cost_reverse(
     return r_cost(state_index=next_state_index, next_state_index=state_index, env=env)
 
 
-def get_epsilon_greedy(epsilon: float, num_actions: int) -> callable:
-    def epsilon_greedy(
-        state_index: torch.LongTensor, model: callable, env: ReparamEnv
-    ) -> torch.LongTensor:
-        if torch.rand(1) < epsilon:
-            return torch.randint(low=0, high=num_actions, size=(1,)).long()
-        else:
-            return get_optimal_action(q_model=model, state_index=state_index, env=env)
-
-    return epsilon_greedy
-
-
-def get_state(state_index: torch.LongTensor, env: ReparamEnv):
+def get_real_state(state_index: torch.LongTensor, env: ReparamEnv):
     """works also with multiple states"""
-    t_data = env.data[:][0]
+    t_data = env.t_data
     return t_data[state_index].float()
 
 
-def is_end_state(state_index: torch.LongTensor, env: ReparamEnv):
-    t_data = env.data[:][0]
-    grid_max_index = t_data.size(0) - 1
-    answer = torch.logical_and(
+def is_end_state(state_index: np.ndarray, env: ReparamEnv):
+    grid_max_index = len(env.t_data) - 1
+    answer = np.logical_and(
         state_index[..., 0:1] == grid_max_index, state_index[..., 1:2] == grid_max_index
     )
     return answer
@@ -318,20 +312,12 @@ def is_start_state(state_index: torch.LongTensor, env: ReparamEnv):
     return torch.logical_and(state_index[..., 0:1] == 0, state_index[..., 1:2] == 0)
 
 
-def get_optimal_action(
-    q_model: callable, state_index: torch.LongTensor, env: ReparamEnv
-) -> torch.LongTensor:
-    state = get_state(state_index=state_index, env=env).float()
-    action_index = torch.argmin(q_model(state), dim=-1, keepdim=True).long()
-    return action_index
-
-
 def get_action_map(depth, size: int, reverse: bool = False):
     # assumes same base
     # hack to make a list of all admissible directions (in reverse)
     max_grid_index = size - 1
     assert depth <= max_grid_index, "action space larger than state space"
-    action_array = torch.LongTensor(
+    action_array = np.array(
         [
             [x, y]
             for x, y in product(range(1, depth + 1), range(1, depth + 1))
@@ -342,9 +328,7 @@ def get_action_map(depth, size: int, reverse: bool = False):
         action_array *= -1
 
     # could also have used np.unravel_index
-    def action_map(
-        action_index: np.ndarray, state_index: np.ndarray
-    ) -> torch.LongTensor:
+    def action_map(action_index: np.ndarray, state_index: np.ndarray) -> np.ndarray:
         """state is index (i, j), action is (i)
 
         Works with many actions"""
@@ -353,9 +337,7 @@ def get_action_map(depth, size: int, reverse: bool = False):
 
         # It is strange that actions act on state indices, but it should work
         action = action_array[action_index[..., 0]]
-        new_state_index = torch.clip(
-            state_index + action, min=0, max=max_grid_index
-        ).long()
+        new_state_index = np.clip(np.add(state_index, action), 0, max_grid_index)
         return new_state_index
 
     return action_map, len(action_array)
@@ -390,21 +372,7 @@ def get_optimal_path(
     return None
 
 
-def get_path_value(path: torch.LongTensor, env: ReparamEnv) -> torch.Tensor:
-    if path is None:
-        return torch.tensor(torch.inf)
-    value = torch.zeros(1)
-    for i in range(len(path) - 1):
-        value += env.r_cost(state_index=path[i], next_state_index=path[i + 1], env=env)
-    return value
-
-
-def compute_loss_rl(model: callable, env: ReparamEnv):
-    path = get_optimal_path(q_model=model, env=env)
-    return get_path_value(path=path, env=env)
-
-
-def sample_states(env: ReparamEnv, N: int = 1) -> State:
+def sample_states(env: ReparamEnv, N: int = 1):
     grid_len = len(env.data)
     states = torch.randint(0, grid_len, size=(N, 1), dtype=torch.long).long()
     return torch.cat((states, states), dim=1)

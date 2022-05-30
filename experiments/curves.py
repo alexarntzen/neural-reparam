@@ -2,35 +2,29 @@
 import torch
 from neural_reparam.plotting import plot_curve
 from neural_reparam.interpolation import get_pc_curve, get_pl_curve
+from neural_reparam.utils import stack_last_dim, use_torch_with_numpy
 from math import pi
-import numpy as np
 
 
 def c_2(t):
     c_x = torch.cos(2 * pi * t)
     c_y = torch.sin(4 * pi * t)
-    if len(t.shape) == 1:
-        return torch.stack((c_x, c_y), dim=1)
-    else:
-        return torch.cat((c_x, c_y), dim=-1)
+    return stack_last_dim(c_x, c_y)
 
 
+@use_torch_with_numpy
 def r(t):
     # sqrt(abs(c_2'))c_2
-    if isinstance(t, np.ndarray):
-        return r(torch.from_numpy(t)).numpy()
     r_x = -2 * pi * torch.sin(2 * pi * t)
     r_y = 4 * pi * torch.cos(4 * pi * t)
-    if len(t.shape) == 1:
-        return torch.stack((r_x, r_y), dim=1)
-    else:
-        return torch.cat((r_x, r_y), dim=-1)
+    return stack_last_dim(r_x, r_y)
 
 
 const1 = 2 * torch.log(torch.tensor([21]))
 const2 = 4 * torch.tanh(torch.tensor([10]))
 
 
+@use_torch_with_numpy
 def ksi(t):
     ksi1 = torch.log(20 * t + 1) / const1
     ksi2 = (1 + torch.tanh(20 * t - 10)) / const2
@@ -50,10 +44,9 @@ def c_1(t):
     return c_2(ksi(t))
 
 
+@use_torch_with_numpy
 def q(t):
     # Q(c_1) = Q(c_2 o ksi) = sqrt(d/dt ksi) Q(c_2) o ksi
-    if isinstance(t, np.ndarray):
-        return q(torch.from_numpy(t)).numpy()
     return torch.sqrt(d_ksi_dt(t)) * r(ksi(t))
 
 

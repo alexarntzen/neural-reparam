@@ -4,11 +4,12 @@ import numpy as np
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import TensorDataset, DataLoader
+import gym
+from tqdm import tqdm
 
 from deepthermal.FFNN_model import larning_rates
 
-from neural_reparam.reparam_env import DiscreteReparamEnv, compute_loss_rl
+from neural_reparam.reparam_env import DiscreteReparamEnv, ReparamEnv
 
 State = torch.LongTensor
 
@@ -16,15 +17,15 @@ State = torch.LongTensor
 # penalty_ = torch.tensor(penalty)
 zero_ = torch.tensor(0.0)
 l2_loss = nn.MSELoss()
+smooth_l1 = nn.SmoothL1Loss()
 
 
 def fit_dqn_deterministic(
+    get_env: callable,
     model: callable,
     num_epochs,
     optimizer,
     batch_size: int,
-    choose_action: callable,
-    env: DiscreteReparamEnv,
     init: callable = None,
     track_history=True,
     verbose=False,
@@ -32,16 +33,23 @@ def fit_dqn_deterministic(
     learning_rate=None,
     gamma: float = 1.0,
     init_weight_seed: int = None,
-    compute_loss: callable = compute_loss_rl,
     max_nan_steps=50,
-    C: int = 10,
+    update_every: int = 10,
+    max_ep_len: int = None,
+    initial_steps: int = 1000,
     memory_size: int = 20,
+    epsilon: float = 0.01,
     DDQN: bool = False,
     lr_scheduler=None,
     **kwargs,
-) -> tuple[callable, torch.Tensor, torch.Tensor]:
+) -> tuple[callable, np.ndarray, np.ndarray]:
+    """"""
     if init is not None:
         init(model, init_weight_seed=init_weight_seed)
+
+    # model = critic, is updated
+    # model_actor =  actor
+    model_actor = copy.deepcopy(model)
 
     if learning_rate is None:
         learning_rate = larning_rates[optimizer]
@@ -70,83 +78,69 @@ def fit_dqn_deterministic(
         max_nan_steps = 2
         verbose_interval = 1 if num_epochs < 10 else 5
     elif callable(optimizer):
-        optimizer_ = optimizer(model.parameters)
+        optimizer_ = optimizer(model.parameters())
     else:
         raise ValueError("Optimizer not recognized")
 
     if lr_scheduler is not None:
         scheduler = lr_scheduler(optimizer_)
 
-    loss_history_train = torch.zeros(num_epochs)
+    q_loss_history = torch.zeros(num_epochs)
+    rewards_history = torch.zeros(num_epochs)
+
     nan_steps = 0
 
-    # initialize momory
-    mem_action_indexes = env.sample_action(env=env, N=memory_size)
-    mem_state_indexes = env.sample_states(env=env, N=memory_size)
-    mem_r_costs = torch.zeros((memory_size, 1))
-    for i in range(memory_size):
-        next_state_index = env.action_map(
-            action_index=mem_action_indexes[i], state_index=mem_state_indexes[i]
-        )
-        mem_r_costs[i] = env.r_cost(
-            state_index=mem_state_indexes[i],
-            next_state_index=next_state_index,
-            env=env,
-        )
+    # initialize env
+    env: DiscreteReparamEnv = get_env()
+    env.reset()
+    if max_ep_len is None:
+        max_ep_len = env.size * 2
 
-    # memory is reference to data that will be updated
-    replay_memory = TensorDataset(mem_state_indexes, mem_action_indexes, mem_r_costs)
-    memory_iter = 0
+    # init replay memory
+    replay_memory = ReplayMemory(memory_size=memory_size, env=env)
+
+    # init memory
+    for i in range(initial_steps):
+        # a = env.action_space.sample()
+        a = get_optimal_action(model_actor, env=env)
+        o1 = env.state
+        o2, r, d, _ = env.step(action=a)
+
+        po1, po2 = preprocess_states(o1, o2, env=env)
+        replay_memory.push(po1, a, po2, r, d)
+        if d:
+            env.reset()
 
     # Loop over epochs
-    for epoch in range(num_epochs):
-        # make indexes that repeats itself t_scale times
-        if verbose and not epoch % verbose_interval:
-            print(
-                "################################ ",
-                epoch,
-                " ################################",
-            )
-        # init epoch
-        state_index = env.start_state
-        C_iter = 0
-        model_hat = copy.deepcopy(model)
-        while not env.is_end_state(state_index, env=env):
+    total_steps = 0
+    for epoch in tqdm(
+        range(num_epochs), desc="Epoch: ", disable=(not verbose), leave=False
+    ):
+        try:
+            # init epoch/episode
+            env.reset()
+            done = False
+            q_losses = torch.zeros(max_ep_len)
+            steps = 0
 
-            if C_iter == C:
-                model_hat = copy.deepcopy(model)
+            # take steps
+            for step in range(max_ep_len):
+                action = epsilon_greedy(model_actor, env=env, epsilon=epsilon)
+                state = env.state
+                next_state, reward, done, _ = env.step(action=a)
+                steps += 1
+                total_steps += 1
+                po1, po2 = preprocess_states(state, next_state, env=env)
+                replay_memory.push(po1, action, po2, reward, done)
 
-                C_iter = 0
-            C_iter += 1
-            memory_iter = (memory_iter + 1) % memory_size
-
-            #  get next state and update memory
-            with torch.no_grad():
-                action_index = choose_action(
-                    state_index=state_index, model=model, env=env
-                )
-
-                next_state_index = env.action_map(
-                    action_index=action_index, state_index=state_index
-                )
-                mem_action_indexes[memory_iter] = action_index
-                mem_state_indexes[memory_iter] = state_index
-                mem_r_costs[memory_iter] = env.r_cost(
-                    state_index=state_index, next_state_index=next_state_index, env=env
-                )
-
-            # get data from memory
-            train_data = DataLoader(
-                replay_memory, batch_size=batch_size, shuffle=True, drop_last=False
-            )
-
-            for state_indexes_i, action_indexes_i, r_costs_i in train_data:
-                next_state_indexes_i = env.action_map(
-                    action_index=action_indexes_i, state_index=state_indexes_i
-                )
-
-                states = env.get_state(state_index=state_indexes_i, env=env)
-                next_states = env.get_state(state_index=next_state_indexes_i, env=env)
+                # get data from memory
+                (
+                    po1_batch,
+                    a_batch,
+                    po2_batch,
+                    reward_batch,
+                    done_batch,
+                ) = replay_memory.sample(batch_size)
 
                 def closure():
                     # zero the parameter gradients
@@ -157,64 +151,174 @@ def fit_dqn_deterministic(
                         # make sure start state has 0  value
                         # print(next_state_indexes_i, )
                         if DDQN:
-                            actions = torch.argmin(
-                                model(next_states), dim=-1, keepdim=True
+                            actions = torch.argmax(
+                                model(po2_batch), dim=-1, keepdim=True
                             )
-                            Q_hat_next_no_bound = torch.gather(
-                                model_hat(next_states), dim=-1, index=actions
+                            Q_hat_next = torch.gather(
+                                model_actor(po2_batch), dim=-1, index=actions
                             )
 
                         else:
-                            Q_hat_next_no_bound = torch.min(
-                                model_hat(next_states), dim=-1, keepdim=True
+                            Q_hat_next = torch.max(
+                                model_actor(po2_batch), dim=-1, keepdim=True
                             )[0]
 
-                        Q_hat_next = torch.where(
-                            env.is_end_state(next_state_indexes_i, env=env),
-                            torch.tensor(0, dtype=torch.float),
-                            Q_hat_next_no_bound,
-                        )
-                        Y = gamma * Q_hat_next + r_costs_i
-                        # Y = torch.where(env.is_start_state(state_indexes_i, env= env),
-                        #                 torch.tensor(0, dtype=torch.float),
-                        #                 gamma * Q_hat_next_no_bound + r_costs_i)
-                    Q_optim = torch.gather(
-                        model(states), dim=-1, index=action_indexes_i
-                    )
+                        Y = gamma * Q_hat_next * done_batch + reward_batch
 
-                    loss = l2_loss(Q_optim, Y)
+                    Q_optim = torch.gather(model(po1_batch), dim=-1, index=a_batch)
+                    # Compute Huber loss
+
+                    loss = smooth_l1(Q_optim, Y)
                     loss.backward()
+                    q_losses[steps] = loss.item()
                     return loss
+                    # end closure
+
+                # update actor
+                if steps % update_every == 0:
+                    model_actor.load_state_dict(model.state_dict())
 
                 optimizer_.step(closure=closure)
+                if done:
+                    break
+                # end step
+
+            if track_history or (lr_scheduler is not None):
+                epoch_q_loss = torch.sum(q_losses) / steps
+                rewards_history[epoch] = get_value(model=model, env=env)
+                q_loss_history[epoch] = epoch_q_loss
+
+                if lr_scheduler is not None:
+                    scheduler.step(epoch_q_loss)
+
+                if track_history:
+                    # stop if nan output
+                    if torch.isnan(epoch_q_loss):
+                        nan_steps += 1
+                    if epoch % 100 == 0:
+                        nan_steps = 0
+
+            if verbose and not epoch % verbose_interval and track_history:
+                print("Reward: ", np.round(rewards_history[epoch], 8))
+                print("Q loss: ", np.round(q_loss_history[epoch], 8))
+
+            if nan_steps > max_nan_steps:
                 break
+            # end epoch
 
-            state_index = next_state_index
-        if track_history or (lr_scheduler is not None):
-            train_loss = compute_loss(model=model, env=env).detach()
-
-            if lr_scheduler is not None:
-                scheduler.step(train_loss)
-
-            loss_history_train[epoch] = train_loss
-            if track_history:
-                # stop if nan output
-                if torch.isnan(train_loss):
-                    nan_steps += 1
-                if epoch % 100 == 0:
-                    nan_steps = 0
-
-        if verbose and not epoch % verbose_interval and track_history:
-            print("Training Loss: ", np.round(loss_history_train[epoch], 8))
-
-        if nan_steps > max_nan_steps:
+        except KeyboardInterrupt:
+            print("Interrupted breaking")
             break
+        # end epochs
 
-    if verbose and track_history and len(loss_history_train) > 0:
-        print("Final training Loss: ", np.round(loss_history_train[-1], 8))
+    if verbose and track_history:
+        if len(rewards_history) > 0:
+            print("Final eward: ", np.round(rewards_history[-1], 8))
+        if len(q_loss_history) > 0:
+            print("Final Q loss: ", np.round(q_loss_history[-1], 8))
 
-    return (
-        model,
-        torch.as_tensor(loss_history_train),
-        torch.as_tensor(loss_history_train),
-    )
+    return model, np.array(q_loss_history), np.array(rewards_history)
+
+
+class ReplayMemory(object):
+    def __init__(self, memory_size, env: ReparamEnv):
+        obs_dim = env.observation_space.shape
+        act_dim = env.action_space.shape
+        self.o1_array = torch.zeros([memory_size, *obs_dim], dtype=torch.float32)
+        self.a_array = torch.zeros([memory_size, *act_dim], dtype=torch.int64)
+        self.o2_array = torch.zeros([memory_size, *obs_dim], dtype=torch.float32)
+        self.r_array = torch.zeros([memory_size, 1], dtype=torch.float32)
+        self.d_array = torch.zeros([memory_size, 1], dtype=torch.int)
+        self.ptr, self.size, self.max_size = 0, 0, memory_size
+
+    def push(self, o1, a, o2, r, d):
+        self.o1_array[self.ptr] = o1
+        self.a_array[self.ptr] = a
+        self.o2_array[self.ptr] = o2
+        self.r_array[self.ptr] = r
+        self.d_array[self.ptr] = d
+        self.ptr = (self.ptr + 1) % self.max_size
+        self.size = min(self.size + 1, self.max_size)
+
+    def sample(self, batch_size=32):
+        idxs = np.random.randint(0, self.size, size=batch_size)
+        return (
+            self.o1_array[idxs],
+            self.a_array[idxs],
+            self.o2_array[idxs],
+            self.r_array[idxs],
+            self.d_array[idxs],
+        )
+
+    def __len__(self):
+        return self.size
+
+
+@torch.no_grad()
+def get_optimal_action(
+    model: callable, env: ReparamEnv, state: gym.core.ObsType = None
+) -> torch.LongTensor:
+    if state is None:
+        state = env.state
+    p_state = torch.as_tensor(env.preprocess_state(state), dtype=torch.float32)
+    action_index = torch.argmin(model(p_state), dim=-1, keepdim=True).long()
+    return action_index
+
+
+def get_value(
+    model: callable,
+    env: ReparamEnv,
+    start_state: gym.core.ObsType = None,
+    max_ep_len: int = None,
+) -> float:
+    o1, d, value = env.reset(), False, 0
+    if max_ep_len is None:
+        max_ep_len = env.size**2
+
+    if start_state is None:
+        env.state = o1
+    else:
+        env.state = start_state
+        o1 = start_state
+    a = get_optimal_action(model=model, state=o1, env=env)
+
+    for i in range(max_ep_len):
+        o2, r, d, _ = env.step(action=a)
+        value += r
+        o1 = o2
+
+        if d:
+            break
+    return value
+
+
+def get_path_value(path: torch.LongTensor, env: ReparamEnv) -> torch.Tensor:
+    if path is None:
+        return torch.tensor(torch.inf)
+    value = 0
+
+    for i in range(len(path) - 1):
+        value += env._r_cost(path[i], path[i + 1])
+    return value
+
+
+def get_epsilon_greedy(epsilon: float, num_actions: int) -> callable:
+    def epsilon_greedy(model: callable, env: ReparamEnv) -> int:
+        if torch.rand(1) < epsilon:
+            return env.action_space.sample()
+        else:
+            return get_optimal_action(model=model, env=env)
+
+    return epsilon_greedy
+
+
+def epsilon_greedy(model: callable, env: ReparamEnv, epsilon: float = 0.01) -> int:
+    if torch.rand(1) < epsilon:
+        return env.action_space.sample().item()
+    else:
+        return get_optimal_action(model=model, env=env)
+
+
+def preprocess_states(*states, env: ReparamEnv):
+    for state in states:
+        yield torch.as_tensor(env.preprocess_state(state), dtype=torch.float32)
