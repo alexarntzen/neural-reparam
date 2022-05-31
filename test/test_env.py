@@ -106,8 +106,6 @@ class TestEnv(unittest.TestCase):
         print("\nComparing to local_cost function:")
         for _ in range(10):
             for N in [2 ** (n * 2) for n in range(5, 7)]:
-                if local_cost is None:
-                    break
                 # random index
                 start = np.random.randint(0, N, size=2)
                 end = np.random.randint(start, (N, N), size=2)
