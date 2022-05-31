@@ -5,4 +5,5 @@ deepthermal @ git+https://github.com/alexarntzen/deepthermal.git@new_usage#egg=d
 # signatureshape @ git+https://github.com/alexarntzen/paalel-master/commit/b345153eaf1adb0a9fbd797baa4b7a7e321e71ed.git
 seaborn>=0.11.2
 scikit-learn>=1.1.1
-gym==0.23.1
+gym==0.24.0
+tqdm==4.64.0
