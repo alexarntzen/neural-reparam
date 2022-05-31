@@ -43,7 +43,7 @@ class TestEnv(unittest.TestCase):
             env = DiscreteReparamEnv(r_func=c1.r, q_func=c1.q, size=N)
             check_env(env)
             env = DiscreteReparamReverseEnv(r_func=c1.r, q_func=c1.q, size=N)
-
+            check_env(env)
             env = RealReparamEnv(data=data)
             check_env(env)
             env = DiscreteReparamEnv(data=data)
@@ -54,7 +54,7 @@ class TestEnv(unittest.TestCase):
     def test_r_integral(self):
         # Load data
         for _ in range(10):
-            for N in [256, 1024, 4096]:
+            for N in [256, 1024]:
                 # data
                 t_train = np.linspace(0, 1, N)
                 q_train = c1.q(t_train)
@@ -81,7 +81,7 @@ class TestEnv(unittest.TestCase):
     def test_r_integral_real(self):
         # Load data
         for _ in range(10):
-            for N in [256, 1024, 4096]:
+            for N in [256, 1024]:
                 # data
                 env = RealReparamEnv(r_func=c1.r, q_func=c1.q, size=N)
                 # random index and diff
@@ -105,7 +105,7 @@ class TestEnv(unittest.TestCase):
         # Load data
         print("\nComparing to local_cost function:")
         for _ in range(10):
-            for N in [256, 1024, 4096]:
+            for N in [2 ** (n * 2) for n in range(5, 7)]:
                 if local_cost is None:
                     break
                 # random index
@@ -172,7 +172,7 @@ class TestEnv(unittest.TestCase):
     def test_compare_ksi(self):
         print("\nComputing estimated optimal solution:")
         # Load data
-        for N in [2 ** (n * 2) for n in range(5, 8)]:
+        for N in [2 ** (n * 2) for n in range(5, 7)]:
             # data
             x_train = np.linspace(0, 1, N)
             q_train = c1.q(x_train)
