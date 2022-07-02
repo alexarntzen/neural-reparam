@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from itertools import product
 from math import gcd
@@ -8,8 +10,16 @@ import torch.nn as nn
 from typing import Union
 
 import gym
+from gym import spaces
 from typing import Optional
 
+try:
+    from signatureshape.so3.dynamic_distance import local_cost as dp_local_cost
+
+    SIGNATURSHAPE_COST = True
+except ImportError:
+    warnings.warn("Failed to import local cost")
+    SIGNATURSHAPE_COST = False
 # from neural_reparam.reinforcement_learning import get_optimal_path
 
 
@@ -27,8 +37,10 @@ class ReparamEnv(gym.Env):
         r_func: callable = None,
         data: tuple = None,
         size: int = None,
+        scale: float = 1,
         action_penalty=0,
     ):
+        """data = (t_data, q_data, r_data)"""
         assert render_mode is None or render_mode in self.metadata["render_modes"]
         assert (
             q_func is not None and r_func is not None and size is not None
@@ -55,11 +67,12 @@ class ReparamEnv(gym.Env):
             )
             self.r = interp1d(
                 y=self.r_data,
-                x=self.t_data,
+                x=self.t_data.flatten(),
                 axis=0,
                 assume_sorted=True,
             )
 
+        self.scale = scale
         self.action_penaly = action_penalty
 
         self.rgb_array_white = np.empty([self.size, self.size, 3], dtype=int)
@@ -69,6 +82,8 @@ class ReparamEnv(gym.Env):
         self, seed=None, return_info=False, options=None
     ) -> Union[gym.core.ObsType, tuple[gym.core.ObsType, dict]]:
         # We need the following line to seed self.np_random
+        if seed is None:
+            seed = 0
         super().reset(seed=seed)
         self.rgb_array = np.copy(self.rgb_array_white)
 
@@ -87,9 +102,29 @@ class ReparamEnv(gym.Env):
         done = self._is_end_state(state=new_state)
 
         # reward is negative cost
-        reward = -self._r_cost(state=self.state, next_state=new_state) - penalty
+        # reward is scaled so that Q has the right size
+        reward = (
+            -self.cost(state=self.state, next_state=new_state) * self.scale - penalty
+        )
         observation = new_state
         self.state = new_state
+        if isinstance(observation, torch.Tensor):
+            return observation.numpy(), reward, done, dict()
+        else:
+            return observation, reward, done, dict()
+
+    def test_step(self, action):
+        action, penalty = self._validate_action(action)
+        # update state
+        new_state = self._action_map(action=action, state=self.state)
+
+        # An episode is done if the agent has reached the target
+        done = self._is_end_state(state=new_state)
+
+        # reward is negative cost
+        reward = -self.cost(state=self.state, next_state=new_state) - penalty
+        observation = new_state
+
         if isinstance(observation, torch.Tensor):
             return observation.numpy(), reward, done, dict()
         else:
@@ -111,6 +146,12 @@ class ReparamEnv(gym.Env):
         else:
             return state
 
+    def _is_end_state(self, state):
+        return np.array_equal(state, self.end_state)
+
+    def cost(self, state: np.ndarray, next_state: np.ndarray) -> np.float32:
+        raise NotImplementedError
+
 
 class RealReparamEnv(ReparamEnv):
     metadata = {"render_modes": ["rgb_array"]}
@@ -118,10 +159,8 @@ class RealReparamEnv(ReparamEnv):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
 
-        self.observation_space = gym.spaces.Box(
-            low=0, high=1, shape=(2,), dtype=np.float32
-        )
-        self.action_space = gym.spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
+        self.observation_space = spaces.Box(low=0, high=1, shape=(2,), dtype=np.float32)
+        self.action_space = spaces.Box(low=-1, high=1, shape=(2,), dtype=np.float32)
 
         self.end_state = np.ones(2, dtype=np.float32)
         self.start_state = np.zeros(2, dtype=np.float32)
@@ -135,9 +174,6 @@ class RealReparamEnv(ReparamEnv):
         # dx = dx_dt * dt
         # action_step = np.array([dx, dt], dtype=np.float32)
         return np.clip(self.state + action, 0, 1)
-
-    def _is_end_state(self, state):
-        return np.array_equal(state, self.end_state)
 
     def _validate_action(self, action) -> tuple[gym.core.ActType, float]:
         # action_mod = np.clip(action,-1,np.inf)
@@ -153,7 +189,7 @@ class RealReparamEnv(ReparamEnv):
     def get_state_index(self) -> tuple:
         return round(self.state[0] * self.size), round(self.state[1] * self.size)
 
-    def _r_cost(self, state: np.ndarray, next_state: np.ndarray) -> np.float32:
+    def cost(self, state: np.ndarray, next_state: np.ndarray) -> np.float32:
         """Probably could be more efficient"""
         # extract values
         t_0, x_0 = state
@@ -175,52 +211,66 @@ class RealReparamEnv(ReparamEnv):
         integrand = np.sum(
             (q_values - r_shifted_values * np.sqrt(dx / dt)) ** 2, axis=-1
         )
-        penalty = 1 if dx == 0 else 0
-        return trapezoid(integrand, t_values).item() + penalty
+        return trapezoid(integrand, t_values).item()
 
 
 class DiscreteReparamEnv(ReparamEnv):
-    def __init__(self, depth: int = 4, **kwargs):
+    def __init__(
+        self,
+        illegal_action_penalty: float = 0,
+        depth: int = 4,
+        use_dp_cost: bool = True,
+        **kwargs
+    ):
         super().__init__(**kwargs)
         self.depth = depth
-
+        self.illegal_action_penalty = illegal_action_penalty
         self.action_map, self.num_actions = get_action_map(depth, size=self.size)
-        self.is_start_state = is_start_state
-        self.is_end_state = is_end_state
         self.r_cost = r_cost
-
-        self.observation_space = gym.spaces.Box(
+        self.observation_space = spaces.Box(
             low=0, high=self.size - 1, shape=(2,), dtype=int
         )
-        self.action_space = gym.spaces.Box(
+        self.action_space = spaces.Box(
             low=0, high=self.num_actions - 1, shape=(1,), dtype=int
         )
+        self.use_dp_cost = use_dp_cost
 
         self.end_state = np.ones(2, dtype=int) * self.size - 1
         self.start_state = np.zeros(2, dtype=int)
 
         self.reset()
 
-    def _is_end_state(self, state):
-        return is_end_state(state_index=state, env=self).item()
-
     def _action_map(self, action, state):
         return self.action_map(state_index=state, action_index=action)
 
-    def _r_cost(self, state, next_state):
-        return self.r_cost(
-            env=self, state_index=state, next_state_index=next_state
-        ).item()
+    def cost(self, state, next_state):
+        if self.use_dp_cost:
+            return self.dp_local_cost(state=state, next_state=next_state)
+        else:
+            return self.r_cost(
+                env=self,
+                state_index=state,
+                next_state_index=next_state,
+                illegal_action_penalty=self.illegal_action_penalty,
+            ).item()
 
     def get_state_index(self) -> tuple:
         return self.state
 
     def preprocess_state(self, state: np.ndarray = None) -> np.ndarray:
-        return self.t_data[self.state]
+        return self.t_data[state]
 
     def _validate_action(self, action):
         assert 0 <= action < self.num_actions
         return action, 0
+
+    def dp_local_cost(self, state, next_state):
+        if SIGNATURSHAPE_COST:
+            return dp_local_cost(
+                *state, *next_state, q0=self.q_data, q1=self.r_data, I=self.t_data
+            )
+        else:
+            raise ImportError("No dp local cost")
 
 
 class DiscreteReparamReverseEnv(DiscreteReparamEnv):
@@ -229,20 +279,27 @@ class DiscreteReparamReverseEnv(DiscreteReparamEnv):
         self.action_map, self.num_actions = get_action_map(
             self.depth, size=self.size, reverse=True
         )
-        self.is_start_state = is_end_state
-        self.is_end_state = is_start_state
         self.r_cost = r_cost_reverse
-        self.start_state_index = np.ones(2) * self.size - 1
 
         self.end_state, self.start_state = self.start_state, self.end_state
+        self.reset()
+
+    def cost(self, state, next_state):
+        return super().cost(state=next_state, next_state=state)
 
 
 def r_cost(
-    state_index: np.ndarray, next_state_index: np.ndarray, env: ReparamEnv
+    state_index: np.ndarray,
+    next_state_index: np.ndarray,
+    env: ReparamEnv,
+    illegal_action_penalty: float = 0,
 ) -> float:
     assert np.all(np.greater_equal(next_state_index, state_index)), "wrong direction"
-    if state_index[0] == next_state_index[0]:
-        return zero_
+    index_diff = next_state_index - state_index
+    if index_diff[0] == 0:
+        print("illegal", next_state_index, state_index)
+        return illegal_action_penalty * (index_diff[1])
+
     # elif torch.any(state_index == next_state_index):
     #     return penalty_
 
@@ -250,7 +307,6 @@ def r_cost(
     q_eval = q_data[state_index[0] : next_state_index[0] + 1]
     r_eval = r_data[state_index[1] : next_state_index[1] + 1]
 
-    index_diff = next_state_index - state_index
     if state_index[1] == next_state_index[1]:
         # if x does not change compute
         tx_indices = np.arange(0, index_diff[0] + 1)
@@ -288,9 +344,17 @@ def r_cost(
 
 
 def r_cost_reverse(
-    state_index: torch.LongTensor, next_state_index: torch.LongTensor, env: ReparamEnv
+    state_index: torch.LongTensor,
+    next_state_index: torch.LongTensor,
+    env: ReparamEnv,
+    illegal_action_penalty: float = 0,
 ) -> torch.Tensor:
-    return r_cost(state_index=next_state_index, next_state_index=state_index, env=env)
+    return r_cost(
+        state_index=next_state_index,
+        next_state_index=state_index,
+        env=env,
+        illegal_action_penalty=illegal_action_penalty,
+    )
 
 
 def get_real_state(state_index: torch.LongTensor, env: ReparamEnv):
@@ -325,18 +389,38 @@ def get_action_map(depth, size: int, reverse: bool = False):
     )
     if reverse:
         action_array *= -1
-
+    max_incline_t = (
+        -np.min(action_array[:, 0]) if reverse else np.max(action_array[:, 0])
+    )
+    max_incline_x = (
+        -np.min(action_array[:, 1]) if reverse else np.max(action_array[:, 1])
+    )
+    end_state_index = (
+        np.zeros(2, dtype=int)
+        if reverse
+        else np.array([max_grid_index, max_grid_index])
+    )
+    num_actions = len(action_array)
     # could also have used np.unravel_index
+
     def action_map(action_index: np.ndarray, state_index: np.ndarray) -> np.ndarray:
-        """state is index (i, j), action is (i)
-
-        Works with many actions"""
-
-        # torch.LongTensor(np.divmod(action_index, base_dim)[-1])
+        """state is index (i, j), action is (i)"""
 
         # It is strange that actions act on state indices, but it should work
-        action = action_array[action_index[..., 0]]
+        action = action_array[action_index].flatten()
         new_state_index = np.clip(np.add(state_index, action), 0, max_grid_index)
+
+        # if future illegal action
+        difference = np.abs(end_state_index - new_state_index)
+
+        if np.any(difference == 0):
+            new_state_index = end_state_index
+        elif (
+            difference[1] / difference[0] > max_incline_x
+            or difference[0] / difference[1] > max_incline_t
+        ):
+            return action_map((action_index + 1) % num_actions, state_index=state_index)
+
         return new_state_index
 
     return action_map, len(action_array)

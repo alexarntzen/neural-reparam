@@ -1,8 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from deepthermal.plotting import plot_result_sorted
-from neural_reparam.reparam_env import ReparamEnv
+from extratorch.plotting import plot_result_sorted
+from neural_reparam.reparam_env import DiscreteReparamEnv
 from neural_reparam.reinforcement_learning import get_optimal_path
+from typing import List, Union
 import torch
 
 
@@ -52,24 +53,66 @@ def plot_models_performance(
 
 
 @torch.no_grad()
-def plot_solution_rl(model, env: ReparamEnv, **kwargs):
-    (x_eval,) = env.t_data
-    size = len(x_eval)
-    ind = torch.as_tensor(np.indices((size, size)).T)
+def plot_solution_rl(
+    model: Union[List[torch.nn.Module], torch.nn.Module],
+    env: DiscreteReparamEnv,
+    **kwargs
+):
+    fig, ax = plt.subplots(1, tight_layout=True)
+    # get values
+    x = t = env.t_data
+    grid = np.stack(np.meshgrid(x, t, indexing="ij"), axis=-1)
 
-    grid = x_eval[ind]
-
-    # comptue cost
-    cost_matrix = torch.min(model(grid).detach(), dim=-1)[0]
-    computed_path_indexes = get_optimal_path(model=model, env=env)
-    computed_path = x_eval[computed_path_indexes]
-
-    # add V values to axes
-    fig, ax = plt.subplots(1)
-    plot = ax.imshow(cost_matrix, extent=[0, 1, 0, 1], origin="lower")
-    fig.colorbar(plot)
-
-    plot_result_sorted(
-        x_pred=computed_path[:, 0], y_pred=computed_path[:, 1], fig=fig, **kwargs
+    # compute cost
+    model_cost_matrix = np.max(
+        model(torch.as_tensor(grid, dtype=torch.float32)).numpy(), axis=-1
     )
+    model_path = get_optimal_path(model=model, env=env, double_search=True)
+    # will save and close fig
+    fig = plot_value_func(
+        value_matrix=model_cost_matrix,
+        path=model_path,
+        t_data=env.t_data,
+        ax=ax,
+        **kwargs
+    )
+
+    return fig
+
+
+def plot_value_func(
+    value_matrix: np.ndarray,
+    t_data: np.ndarray,
+    path: Union[List, np.ndarray] = None,
+    ax: plt = None,
+    colorbar=True,
+    **kwargs
+):
+    if ax is None:
+        fig, ax = plt.subplots(1, tight_layout=True)
+    else:
+        fig = ax.get_figure()
+
+    # get grid
+    x = t = t_data
+    X, T = np.meshgrid(x, t, indexing="ij")
+
+    cost_matrix = -value_matrix if np.any(value_matrix < 0) else value_matrix
+    plot = ax.contourf(X, T, cost_matrix, cmap="viridis")
+
+    if colorbar:
+        fig.colorbar(plot, ax=ax, pad=0.02)
+    if path is not None:
+        # add path
+        t_indexes = [p[0] for p in path]
+        x_indexes = [p[1] for p in path]
+        path_coordinates = t_data[t_indexes], t_data[x_indexes]
+        plot_result_sorted(
+            x_pred=path_coordinates[0],
+            y_pred=path_coordinates[1],
+            color_pred="red",
+            ax=ax,
+            pred_label="Optimal path",
+            **kwargs
+        )
     return fig

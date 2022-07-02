@@ -43,7 +43,8 @@ def r(t):
     # r = Q(c_2)
     r_x = torch.zeros_like(t)
     r_y = torch.ones_like(t)
-    return stack_last_dim(r_x, r_y)
+    out = stack_last_dim(r_x, r_y)
+    return out
 
 
 DIST_R_Q = 2 - sqrt(2)

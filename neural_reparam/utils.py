@@ -1,16 +1,22 @@
 from typing import Union
 import torch
 import numpy as np
+from collections.abc import Iterable
 
-Array = Union[np.ndarray, torch.Tensor]
+Array = Union[int, float, np.ndarray, torch.Tensor, Iterable]
 
 
 def use_torch_with_numpy(func):
     def wrapper(array: Array):
-        if isinstance(array, np.ndarray):
-            return func(torch.from_numpy(array)).numpy()
-        else:
+        if isinstance(array, torch.Tensor):
             return func(array)
+        elif isinstance(array, np.ndarray):
+            out = func(torch.from_numpy(array))
+            return out.numpy()
+        elif isinstance(array, Iterable):
+            return func(torch.Tensor(array))
+        else:
+            return func(torch.Tensor([array]))
 
     return wrapper
 

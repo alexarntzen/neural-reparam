@@ -2,7 +2,8 @@
 [![Python linting](https://github.com/alexarntzen/fordypningsprosjekt/workflows/Python%20linting/badge.svg)](https://github.com/alexarntzen/fordypningsprosjekt/actions/workflows/python_lint.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-# Fordypningsprosjekt
+# Nural reparametrization
+This 
 Project for the subject TMA4500 - Industrial Mathematics, Specialization Project at NTNU. 
 
 The experiments can be found in the `/experiments` folder. 
