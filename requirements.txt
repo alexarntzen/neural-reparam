@@ -1,10 +1,10 @@
 numpy>=1.18.2
 matplotlib>=3.5.2
-torch>=1.10.2
-deepthermal @ git+https://github.com/alexarntzen/deepthermal.git@new_usage#egg=deepthermal
-extratorch @ git+https://github.com/alexarntzen/extratorch.git
-# signatureshape @ git+https://github.com/alexarntzen/paalel-master/master/b345153eaf1adb0a9fbd797baa4b7a7e321e71ed.git
+torch~=1.12.0
 seaborn>=0.11.2
 scikit-learn>=1.1.1
 gym>=0.24.1
 tqdm>=4.64.0
+deepthermal @ git+https://github.com/alexarntzen/deepthermal.git@new_usage#egg=deepthermal
+extratorch @ git+https://github.com/alexarntzen/extratorch.git
+signatureshape @ git+https://github.com/alexarntzen/signatureshape.git

@@ -233,7 +233,7 @@ class DiscreteReparamEnv(ReparamEnv):
         self.action_space = spaces.Box(
             low=0, high=self.num_actions - 1, shape=(1,), dtype=int
         )
-        self.use_dp_cost = use_dp_cost
+        self.use_dp_cost = use_dp_cost if SIGNATURSHAPE_COST else False
 
         self.end_state = np.ones(2, dtype=int) * self.size - 1
         self.start_state = np.zeros(2, dtype=int)
@@ -279,7 +279,6 @@ class DiscreteReparamReverseEnv(DiscreteReparamEnv):
         self.action_map, self.num_actions = get_action_map(
             self.depth, size=self.size, reverse=True
         )
-        self.r_cost = r_cost_reverse
 
         self.end_state, self.start_state = self.start_state, self.end_state
         self.reset()
@@ -341,20 +340,6 @@ def r_cost(
     # compute integral
     r_int = trapezoid(integrand, tx_indices) * (end_t - start_t) / tx_indices[-1]
     return r_int
-
-
-def r_cost_reverse(
-    state_index: torch.LongTensor,
-    next_state_index: torch.LongTensor,
-    env: ReparamEnv,
-    illegal_action_penalty: float = 0,
-) -> torch.Tensor:
-    return r_cost(
-        state_index=next_state_index,
-        next_state_index=state_index,
-        env=env,
-        illegal_action_penalty=illegal_action_penalty,
-    )
 
 
 def get_real_state(state_index: torch.LongTensor, env: ReparamEnv):
